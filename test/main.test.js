@@ -21,6 +21,7 @@ describe('DSL', () => {
       router.add('/baz', { component: 'Baz' });
       router.add('/buzz', { component: 'Buzz' });
       router.mount('/buzz', () => {
+        router.add('#test', { component: 'Anchor' });
         router.add('#:quux', { component: 'Hashed' });
       });
       router.add('/*any', { component: 'Fallback' });
@@ -51,6 +52,8 @@ describe('DSL', () => {
     expect(routes[1].route).to.eql('/buzz#:quux');
     expect(routes[1].params).to.eql({ quux: 'bazzinga' });
     expect(routes[1].path).to.eql('/buzz#bazzinga');
+
+    expect(router.find('/buzz#test')[1].component).to.eql('Anchor');
   });
 
   it('should capture all matching routes', () => {
