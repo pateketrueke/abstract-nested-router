@@ -7,7 +7,7 @@ export class NotFound extends Error {
 }
 
 export function merge(path, parent) {
-  return `${parent !== '/' ? parent : ''}${path}`;
+  return `${parent && parent !== '/' ? parent : ''}${path}`;
 }
 
 export function clean(path) {
@@ -93,25 +93,22 @@ export function rm(path, routes, parent = '/') {
   const fullpath = merge(path, parent);
 
   let root = routes;
-  let del = [];
+  let leaf = null;
+  let key = null;
 
   walk(fullpath, x => {
     if (!root) {
-      del = [];
-      return false;
+      leaf = null;
+      return true;
     }
 
-    if (x !== '/') {
-      del.push({
-        remove: x,
-        parent: root,
-      });
-    }
+    key = x;
+    leaf = x === '/' ? routes['/'] : root;
 
     root = root[x];
   });
 
-  del.forEach(k => {
-    delete k.parent[k.remove];
-  });
+  if (leaf) {
+    delete leaf[key];
+  }
 }
