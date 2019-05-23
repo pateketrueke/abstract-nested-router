@@ -40,7 +40,7 @@ describe('DSL', () => {
     expect(router.find('/foo/fun')[2].component).to.eql('AndNested');
   });
 
-  it('should match star-segments', () => {
+  it('should match splat-segments', () => {
     expect(router.find('/other')[1].component).to.eql('Fallback');
   });
 
@@ -69,16 +69,17 @@ describe('DSL', () => {
 
     router.rm('/foo/:bar');
     expect(router.find('/foo')[1].component).to.eql('JustFoo');
-    expect(() => {
-      router.find('/foo/bar');
-    }).to.throw(/Unreachable/);
+    expect(() => router.find('/foo/bar')).to.throw(/Unreachable/);
     expect(router.find('/foo/nested/something')[3].component).to.eql('NestedValue');
   });
 
   it('should fail if routes are missing', () => {
     router.rm('/*any');
-    expect(() => {
-      router.find('/noop');
-    }).to.throw(/Unreachable/);
+    expect(() => router.find('/noop')).to.throw(/Unreachable/);
+    expect(() => router.rm('/foo/not/exists')).to.throw(/Unreachable/);
+  });
+
+  it('should stop on splat params', () => {
+    expect(router.find('/a/b/c').length).to.eql(2);
   });
 });

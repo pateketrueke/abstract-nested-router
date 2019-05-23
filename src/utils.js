@@ -20,17 +20,12 @@ export function walk(path, cb) {
 
 export function find(path, routes) {
   const leaf = [];
+  const out = [];
 
-  let out = [];
   let root = routes;
   let splat = false;
 
   walk(path, x => {
-    if (!root) {
-      out = [];
-      return true;
-    }
-
     if (splat) {
       return true;
     }
@@ -72,7 +67,7 @@ export function find(path, routes) {
   return out;
 }
 
-export function add(path, routes, parent = '/', routeInfo = null) {
+export function add(path, routes, parent, routeInfo) {
   const fullpath = merge(path, parent);
 
   let root = routes;
@@ -89,7 +84,7 @@ export function add(path, routes, parent = '/', routeInfo = null) {
   root.info = routeInfo;
 }
 
-export function rm(path, routes, parent = '/') {
+export function rm(path, routes, parent) {
   const fullpath = merge(path, parent);
 
   let root = routes;
@@ -108,7 +103,9 @@ export function rm(path, routes, parent = '/') {
     root = root[x];
   });
 
-  if (leaf) {
-    delete leaf[key];
+  if (!leaf) {
+    throw new NotFound(path, key);
   }
+
+  delete leaf[key];
 }
