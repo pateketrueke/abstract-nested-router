@@ -1,17 +1,8 @@
-import Path from 'path-parser';
-
-export class NotFound extends Error {
-  constructor(route, path) {
-    super(`Unreachable '${route}', segment '${path}' is not defined`);
-  }
-}
+import NotFound from './error';
+import PathMatcher from './path';
 
 export function merge(path, parent) {
   return `${parent && parent !== '/' ? parent : ''}${path}`;
-}
-
-export function clean(path) {
-  return path.replace(/#(!\/)?/, '/');
 }
 
 export function walk(path, cb) {
@@ -35,15 +26,17 @@ export function find(path, routes) {
     }
 
     if (!root[x]) {
-      const partial = Object.keys(root).some(k => {
-        if (k.charAt() === '/' && root[k].match) {
-          const matches = root[k].match.partialTest(clean(path));
+      const partial = (root.keys || []).some(k => {
+        if (root[k].pattern) {
+          const matches = root[k].pattern.match(path);
 
           if (matches) {
-            splat = root[k].match.hasSpatParam;
+            splat = root[k].pattern._isSplat;
+
             root[k].info.route = root[k].route;
             root[k].info.params = matches;
             root = root[k];
+
             return true;
           }
         }
@@ -73,15 +66,20 @@ export function add(path, routes, parent, routeInfo) {
   let root = routes;
 
   walk(fullpath, x => {
+    root.keys = root.keys || [];
+
+    if (!root.keys.includes(x)) {
+      root.keys.push(x);
+    }
+
     root = root[x] || (root[x] = {});
   });
 
-  if (fullpath.includes(':') || fullpath.includes('*')) {
-    root.match = new Path(clean(fullpath));
-  }
-
+  root.pattern = new PathMatcher(fullpath);
   root.route = fullpath;
   root.info = routeInfo;
+
+  return fullpath;
 }
 
 export function rm(path, routes, parent) {
@@ -106,6 +104,10 @@ export function rm(path, routes, parent) {
   if (!leaf) {
     throw new NotFound(path, key);
   }
+
+  const offset = leaf.keys.indexOf(key);
+
+  leaf.keys.splice(offset, 1);
 
   delete leaf[key];
 }

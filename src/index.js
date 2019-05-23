@@ -16,7 +16,7 @@ export default class Router {
       },
       find: path => find(path, routes),
       add: (path, routeInfo) => add(path, routes, stack.join(''), routeInfo),
-      rm: path => rm(path, routes),
+      rm: path => rm(path, routes, stack.join('')),
     };
   }
 }
