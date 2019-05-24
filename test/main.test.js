@@ -89,7 +89,7 @@ describe('DSL', () => {
   it('should handle sorting', () => {
     const r = new Router();
 
-    r.mount('/', () => r.add('#anchor'));
+    r.mount('/', () => r.add('/#*_'));
     r.mount('/nested', () => r.add());
     r.mount('/', () => r.add('/slot'));
     r.mount('/', () => r.add('/admin-true'));
@@ -105,8 +105,12 @@ describe('DSL', () => {
     r.mount('/nested', () => r.add('#:any'));
     r.mount('/nested', () => r.add('#:any/*path'));
 
-    expect(r.find('#anchor')[0].route).to.eql('/#anchor');
-    expect(() => r.find('/#anchor')).to.throw(/Unreachable/);
+    expect(() => r.find('#')).to.throw(/Unreachable/);
+    expect(() => {
+      r.find('/');
+      r.find('/#');
+      r.find('/#whatever');
+    }).not.to.throw();
 
     expect(r.find('/user')[1].path).to.eql('/user');
     expect(r.find('/user/john')[2].route).to.eql('/user/:name');
