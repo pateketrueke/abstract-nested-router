@@ -1,5 +1,8 @@
 export default class NotFound extends Error {
   constructor(route, path) {
-    super(`Unreachable '${route}', segment '${path}' is not defined`);
+    const message = `Unreachable '${route}', segment '${path}' is not defined`;
+
+    super(message);
+    this.message = message;
   }
 }
