@@ -1,32 +1,32 @@
-export function buildMatcher(path, keys = []) {
-  let regex = path;
+export function buildMatcher(path) {
+  let regex;
   let _isSplat;
 
-  if (!(path instanceof RegExp)) {
-    regex = path
-      .replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
-      .replace(/\\\((.*?)\\\)/g, '(?:$1)?')
-      .replace(/\\?([:*]\w+)/g, (_, key) => {
-        keys.push(key.substr(1));
+  const keys = [];
 
-        if (key.charAt() === ':') {
-          return '((?!#)[^/]*?)';
-        }
+  regex = String(path)
+    .replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
+    .replace(/\\\((.*?)\\\)/g, '(?:$1)?')
+    .replace(/\\?([:*]\w+)/g, (_, key) => {
+      keys.push(key.substr(1));
 
-        _isSplat = true;
+      if (key.charAt() === ':') {
+        return '((?!#)[^/]*?)';
+      }
 
-        return '((?!#).*?)';
-      });
+      _isSplat = true;
 
-    regex = new RegExp(`^${regex}${!_isSplat ? '(?:$|\\/.*?)' : ''}$`);
-  }
+      return '((?!#).*?)';
+    });
+
+  regex = new RegExp(`^${regex}${!_isSplat ? '(?:$|\\/.*?)' : ''}$`);
 
   return [keys, regex, _isSplat];
 }
 
 export default class PathMatcher {
-  constructor(path, _keys) {
-    const [keys, regex, _isSplat] = buildMatcher(path, _keys);
+  constructor(path) {
+    const [keys, regex, _isSplat] = buildMatcher(path);
 
     return {
       _isSplat,

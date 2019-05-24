@@ -39,27 +39,23 @@ export function find(path, routes) {
     }
 
     if (!root[x]) {
-      let partial;
+      const partial = root.keys.some(k => {
+        if (root[k].pattern) {
+          const matches = root[k].pattern.match(path);
 
-      if (root.keys) {
-        partial = root.keys.some(k => {
-          if (root[k].pattern) {
-            const matches = root[k].pattern.match(path);
+          if (matches) {
+            splat = root[k].pattern._isSplat;
 
-            if (matches) {
-              splat = root[k].pattern._isSplat;
+            root[k].info.route = root[k].route;
+            root[k].info.params = matches;
+            root = root[k];
 
-              root[k].info.route = root[k].route;
-              root[k].info.params = matches;
-              root = root[k];
-
-              return true;
-            }
+            return true;
           }
+        }
 
-          return false;
-        });
-      }
+        return false;
+      });
 
       if (!partial) {
         throw new NotFound(path, x);
@@ -99,11 +95,9 @@ export function add(path, routes, parent, routeInfo) {
     root = root[x] || (root[x] = {});
   });
 
-  if (!root.info) {
-    root.pattern = new PathMatcher(fullpath);
-    root.route = fullpath;
-    root.info = { ...routeInfo };
-  }
+  root.pattern = new PathMatcher(fullpath);
+  root.route = fullpath;
+  root.info = { ...routeInfo };
 
   return fullpath;
 }
@@ -131,11 +125,9 @@ export function rm(path, routes, parent) {
     throw new NotFound(path, key);
   }
 
-  if (leaf.keys) {
-    const offset = leaf.keys.indexOf(key);
+  const offset = leaf.keys.indexOf(key);
 
-    leaf.keys.splice(offset, 1);
-  }
+  leaf.keys.splice(offset, 1);
 
   delete leaf[key];
 }
