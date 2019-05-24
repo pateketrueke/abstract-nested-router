@@ -85,4 +85,36 @@ describe('DSL', () => {
   it('should stop on splat params', () => {
     expect(router.find('/a/b/c').length).to.eql(2);
   });
+
+  it('should handle sorting', () => {
+    const r = new Router();
+
+    r.mount('/', () => r.add('#anchor'));
+    r.mount('/nested', () => r.add());
+    r.mount('/', () => r.add('/slot'));
+    r.mount('/', () => r.add('/admin-true'));
+    r.mount('/', () => r.add('/admin-false'));
+    r.mount('/', () => r.add('/user/:name/:age'));
+    r.mount('/', () => r.add('/user/:name'));
+    r.mount('/', () => r.add('/about'));
+    r.mount('/', () => r.add('/company'));
+    r.mount('/', () => r.add('/'));
+    r.mount('/', () => r.add('/*_'));
+    r.mount('/nested', () => r.add('#'));
+    r.mount('/nested', () => r.add('#test'));
+    r.mount('/nested', () => r.add('#:any'));
+    r.mount('/nested', () => r.add('#:any/*path'));
+
+    expect(r.find('#anchor')[0].route).to.eql('/#anchor');
+    expect(() => r.find('/#anchor')).to.throw(/Unreachable/);
+
+    expect(r.find('/user')[1].path).to.eql('/user');
+    expect(r.find('/user/john')[2].route).to.eql('/user/:name');
+    expect(r.find('/user/john/33')[3].route).to.eql('/user/:name/:age');
+
+    expect(r.find('/nested')[1].route).to.eql('/nested');
+    expect(r.find('/nested#')[1].route).to.eql('/nested#');
+    expect(r.find('/nested#test')[1].route).to.eql('/nested#test');
+    expect(r.find('/nested#a/b/c')[2].route).to.eql('/nested#:any/*path');
+  });
 });

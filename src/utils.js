@@ -2,11 +2,27 @@ import NotFound from './error';
 import PathMatcher from './path';
 
 export function merge(path, parent) {
-  return `${parent && parent !== '/' ? parent : ''}${path}`;
+  return `${parent && parent !== '/' ? parent : ''}${path || ''}`;
 }
 
 export function walk(path, cb) {
   path.split('/').some(x => cb(`/${x}`));
+}
+
+export function sort(routes) {
+  routes.sort((a, b) => {
+    const x = a.includes('*') || a.includes(':');
+    const y = b.includes('*') || b.includes(':');
+
+    if (x && !y) {
+      return a.length > b.length ? -1 : 1;
+    }
+
+    const m = a.split('/').length;
+    const n = b.split('/').length;
+
+    return (b.length - a.length) + (m - n);
+  });
 }
 
 export function find(path, routes) {
@@ -26,23 +42,27 @@ export function find(path, routes) {
     }
 
     if (!root[x]) {
-      const partial = (root.keys || []).some(k => {
-        if (root[k].pattern) {
-          const matches = root[k].pattern.match(path);
+      let partial;
 
-          if (matches) {
-            splat = root[k].pattern._isSplat;
+      if (root.keys) {
+        partial = root.keys.some(k => {
+          if (root[k].pattern) {
+            const matches = root[k].pattern.match(path);
 
-            root[k].info.route = root[k].route;
-            root[k].info.params = matches;
-            root = root[k];
+            if (matches) {
+              splat = root[k].pattern._isSplat;
 
-            return true;
+              root[k].info.route = root[k].route;
+              root[k].info.params = matches;
+              root = root[k];
+
+              return true;
+            }
           }
-        }
 
-        return false;
-      });
+          return false;
+        });
+      }
 
       if (!partial) {
         throw new NotFound(path, x);
@@ -51,9 +71,15 @@ export function find(path, routes) {
       root = root[x];
     }
 
+    const fixedPath = (splat ? path : leaf.join('')) || '/';
+
+    if (root.info && !root.info.route) {
+      root.info.route = fixedPath;
+    }
+
     out.push({
       ...(root && root.info),
-      path: (splat ? path : leaf.join('')) || '/',
+      path: fixedPath,
     });
   });
 
@@ -70,6 +96,7 @@ export function add(path, routes, parent, routeInfo) {
 
     if (!root.keys.includes(x)) {
       root.keys.push(x);
+      sort(root.keys);
     }
 
     root = root[x] || (root[x] = {});
@@ -77,7 +104,7 @@ export function add(path, routes, parent, routeInfo) {
 
   root.pattern = new PathMatcher(fullpath);
   root.route = fullpath;
-  root.info = routeInfo;
+  root.info = { ...routeInfo };
 
   return fullpath;
 }

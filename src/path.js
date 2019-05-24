@@ -4,17 +4,19 @@ export function buildMatcher(path, keys = []) {
 
   if (!(path instanceof RegExp)) {
     regex = new RegExp(`^${path
-      .replace(/[:*]\w+/g, key => {
+      .replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
+      .replace(/\\\((.*?)\\\)/g, '(?:$1)?')
+      .replace(/\\?([:*]\w+)/g, (_, key) => {
         keys.push(key.substr(1));
 
         if (key.charAt() === ':') {
-          return '([^\\/]*?)';
+          return '((?!#)[^\\/]*?)';
         }
 
         _isSplat = true;
 
-        return '(.*?)';
-      })}$`);
+        return '((?!#).*?)';
+      })}(?:$|\\/.*?)`);
   }
 
   return [keys, regex, _isSplat];
