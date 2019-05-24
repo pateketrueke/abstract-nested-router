@@ -4,10 +4,11 @@
   "description": "Minimal nested-routing impl!",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
+  "browser": "dist/index.umd.js",
   "scripts": {
     "dev": "npm run test -- -w",
     "mocha": "_mocha --exit --recursive -bR spec",
-    "build": "bili src/index.js --minimal --format es --format cjs",
+    "build": "bili src/index.js --minimal --format es --format cjs --format umd --module-name AbstractNestedRouter",
     "test": "npm run test:unit --",
     "test:ci": "npm run coverage && npm run report --",
     "test:unit": "npm run mocha -- -r esm 'test/*.test.js'",
@@ -25,7 +26,6 @@
   ],
   "author": "Alvaro Cabrera <yo@soypache.co>",
   "license": "MIT",
-  "dependencies": {},
   "devDependencies": {
     "bili": "^4.8.0",
     "chai": "^4.2.0",
