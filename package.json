@@ -1,0 +1,38 @@
+{
+  "name": "abstract-nested-router",
+  "version": "0.0.0",
+  "description": "Minimal nested-routing impl!",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "scripts": {
+    "dev": "npm run test -- -w",
+    "mocha": "_mocha --exit --recursive -bR spec",
+    "build": "bili src/index.js --minimal --format es --format cjs",
+    "test": "npm run test:unit --",
+    "test:ci": "npm run coverage && npm run report --",
+    "test:unit": "npm run mocha -- -r esm 'test/*.test.js'",
+    "test:coverage": "npm run coverage && npm run report",
+    "coverage": "nyc -x '**/tests/**' -x '**/*.test.js' -- npm run test:unit",
+    "report": "nyc report",
+    "prepublish": "npm run build"
+  },
+  "keywords": [
+    "nested",
+    "router",
+    "abstract",
+    "hash-based",
+    "nested-router"
+  ],
+  "author": "Alvaro Cabrera <yo@soypache.co>",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "bili": "^4.8.0",
+    "chai": "^4.2.0",
+    "esm": "^3.2.25",
+    "mocha": "^6.1.4",
+    "nyc": "^14.1.1",
+    "testdouble": "^3.11.0",
+    "url-pattern": "^1.0.3"
+  }
+}
