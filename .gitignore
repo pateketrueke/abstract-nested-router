@@ -1,4 +1,5 @@
 *.log
+*.tgz
 *.todo
 .DS_Store
 .nyc_output

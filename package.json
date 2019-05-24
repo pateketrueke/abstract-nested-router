@@ -17,6 +17,9 @@
     "report": "nyc report",
     "prepublish": "npm run build"
   },
+  "files": [
+    "dist/*.js"
+  ],
   "keywords": [
     "nested",
     "router",
