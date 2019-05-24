@@ -18,10 +18,7 @@ export function sort(routes) {
       return a.length > b.length ? -1 : 1;
     }
 
-    const m = a.split('/').length;
-    const n = b.split('/').length;
-
-    return (b.length - a.length) + (m - n);
+    return b.length - a.length;
   });
 }
 
@@ -78,7 +75,7 @@ export function find(path, routes) {
     }
 
     out.push({
-      ...(root && root.info),
+      ...root.info,
       path: fixedPath,
     });
   });
@@ -102,9 +99,11 @@ export function add(path, routes, parent, routeInfo) {
     root = root[x] || (root[x] = {});
   });
 
-  root.pattern = new PathMatcher(fullpath);
-  root.route = fullpath;
-  root.info = { ...routeInfo };
+  if (!root.info) {
+    root.pattern = new PathMatcher(fullpath);
+    root.route = fullpath;
+    root.info = { ...routeInfo };
+  }
 
   return fullpath;
 }
