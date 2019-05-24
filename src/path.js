@@ -3,20 +3,22 @@ export function buildMatcher(path, keys = []) {
   let _isSplat;
 
   if (!(path instanceof RegExp)) {
-    regex = new RegExp(`^${path
+    regex = path
       .replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
       .replace(/\\\((.*?)\\\)/g, '(?:$1)?')
       .replace(/\\?([:*]\w+)/g, (_, key) => {
         keys.push(key.substr(1));
 
         if (key.charAt() === ':') {
-          return '((?!#)[^\\/]*?)';
+          return '((?!#)[^/]*?)';
         }
 
         _isSplat = true;
 
         return '((?!#).*?)';
-      })}(?:$|\\/.*?)`);
+      });
+
+    regex = new RegExp(`^${regex}${!_isSplat ? '(?:$|\\/.*?)' : ''}$`);
   }
 
   return [keys, regex, _isSplat];

@@ -132,9 +132,11 @@ export function rm(path, routes, parent) {
     throw new NotFound(path, key);
   }
 
-  const offset = leaf.keys.indexOf(key);
+  if (leaf.keys) {
+    const offset = leaf.keys.indexOf(key);
 
-  leaf.keys.splice(offset, 1);
+    leaf.keys.splice(offset, 1);
+  }
 
   delete leaf[key];
 }
