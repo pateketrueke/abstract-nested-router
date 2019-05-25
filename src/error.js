@@ -1,4 +1,4 @@
-export default class NotFound extends Error {
+export default class extends Error {
   constructor(route, path) {
     const message = `Unreachable '${route}', segment '${path}' is not defined`;
 

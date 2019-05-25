@@ -29,7 +29,7 @@ describe('DSL', () => {
   });
 
   it('should match static segments', () => {
-    expect(router.find('/')[1].component).to.eql('Home');
+    expect(router.find('/')[0].component).to.eql('Home');
     expect(router.find('/foo')[1].component).to.eql('JustFoo');
   });
 
@@ -68,12 +68,14 @@ describe('DSL', () => {
 
   it('should be able to unregister segments', () => {
     router.rm('/');
-    expect(router.find('/')[1].component).to.eql('Fallback');
+    expect(router.find('/')).to.eql([]);
+    expect(router.find('/test')[0].component).to.eql('Fallback');
 
+    router.rm('/*any');
     router.rm('/foo/:bar');
-    expect(router.find('/foo')[1].component).to.eql('JustFoo');
+    expect(router.find('/foo')[0].component).to.eql('JustFoo');
     expect(() => router.find('/foo/bar')).to.throw(/Unreachable/);
-    expect(router.find('/foo/nested/something')[3].component).to.eql('NestedValue');
+    expect(router.find('/foo/nested/something')[2].component).to.eql('NestedValue');
   });
 
   it('should fail if routes are missing', () => {
@@ -108,7 +110,6 @@ describe('DSL', () => {
     expect(() => r.find('#')).to.throw(/Unreachable/);
     expect(() => {
       r.find('/');
-      r.find('/#');
       r.find('/#whatever');
     }).not.to.throw();
 
@@ -120,5 +121,24 @@ describe('DSL', () => {
     expect(r.find('/nested#')[1].route).to.eql('/nested#');
     expect(r.find('/nested#test')[1].route).to.eql('/nested#test');
     expect(r.find('/nested#a/b/c')[2].route).to.eql('/nested#:any/*path');
+    expect(r.find('/nested#abc/def/ghi')[2].params.path).to.eql('def/ghi');
+    expect(() => r.find('/nested/wooot')).to.throw(/Unreachable/);
+  });
+
+  it('should handle retries', () => {
+    const r = new Router();
+
+    r.add('/', { is: 'home' });
+    r.add('/*_', { is: 'catch' });
+    r.add('/:a/*_', { is: 'undef' });
+    r.add('/:a/:b/:c', { is: 'nested' });
+
+    expect(r.find('/')[0].is).to.eql('home');
+    expect(r.find('/test')[1].is).to.eql('undef');
+    expect(r.find('/x/y')[2].is).to.eql('nested');
+    expect(r.find('/x/y/z')[3].is).to.eql('nested');
+    expect(() => r.find('/x/y/z/0')).to.throw(/Unreachable/);
+    expect(r.find('/x/y/z/0', true)[1].is).to.eql('catch');
+    expect(() => r.rm('/:a/:b/:c/:d')).to.throw(/Unreachable/);
   });
 });

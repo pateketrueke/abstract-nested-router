@@ -14,7 +14,7 @@ export default class Router {
         cb();
         stack.pop();
       },
-      find: path => find(path, routes),
+      find: (path, retries) => find(path, routes, retries === true ? 2 : retries || 1),
       add: (path, routeInfo) => add(path, routes, stack.join(''), routeInfo),
       rm: path => rm(path, routes, stack.join('')),
     };
