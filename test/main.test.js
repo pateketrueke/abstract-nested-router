@@ -1,9 +1,11 @@
 import { expect } from 'chai';
 import Router from '../src';
 
-/* global beforeEach, describe, it */
+/* eslint-disable no-unused-expressions */
 
 let router;
+
+/* global beforeEach, describe, it */
 
 describe('DSL', () => {
   beforeEach(() => {
@@ -143,5 +145,17 @@ describe('DSL', () => {
     expect(() => r.find('/x/y/z/0')).to.throw(/Unreachable/);
     expect(r.find('/x/y/z/0', true)[1].is).to.eql('catch');
     expect(() => r.rm('/:a/:b/:c/:d')).to.throw(/Unreachable/);
+  });
+
+  it('should report exact matches', () => {
+    const r = new Router();
+
+    r.add('/');
+    r.add('/*_');
+    r.add('/test');
+
+    expect(r.find('/')[0].matches).to.be.true;
+    expect(r.find('/x')[1].matches).to.be.true;
+    expect(r.find('/test')[1].matches).to.be.true;
   });
 });

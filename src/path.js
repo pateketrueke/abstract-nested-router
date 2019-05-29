@@ -55,13 +55,12 @@ export default class PathMatcher {
     };
   }
 
-  static push(key, prev, leaf, routeInfo) {
+  static push(key, prev, leaf) {
     const root = prev[key] || (prev[key] = {});
 
     if (!root.pattern) {
       root.pattern = new PathMatcher(key);
       root.route = leaf || '/';
-      root.info = { ...routeInfo };
     }
 
     prev.keys = prev.keys || [];

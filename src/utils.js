@@ -45,6 +45,7 @@ export function reduce(key, root, _seen) {
         if (root[k].route) {
           out.push({
             ...root[k].info,
+            matches: (x === leaf) || _isSplat || !extra,
             params: { ...params },
             route: root[k].route,
             path: _isSplat ? extra : leaf || x,
@@ -101,7 +102,13 @@ export function add(path, routes, parent, routeInfo) {
 
   walk(fullpath, (x, leaf) => {
     root = PathMatcher.push(x, root, leaf, routeInfo);
+
+    if (x !== '/') {
+      root.info = root.info || { ...routeInfo };
+    }
   });
+
+  root.info = root.info || { ...routeInfo };
 
   return fullpath;
 }
