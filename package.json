@@ -12,8 +12,8 @@
     "test": "npm run test:unit --",
     "test:ci": "npm run coverage && npm run report --",
     "test:unit": "npm run mocha -- -r esm 'test/*.test.js'",
-    "test:coverage": "npm run coverage && npm run report",
-    "coverage": "nyc -x '**/tests/**' -x '**/*.test.js' -- npm run test:unit",
+    "coverage": "nyc --silent -x '**/tests/**' -x '**/*.test.js' -- npm run test:unit",
+    "upload": "codecov --file=coverage/lcov.info --disable=gcov -e TRAVIS_NODE_VERSION",
     "report": "nyc report",
     "prepublish": "npm run build"
   },
@@ -32,6 +32,7 @@
   "devDependencies": {
     "bili": "^4.8.0",
     "chai": "^4.2.0",
+    "codecov": "^3.5.0",
     "esm": "^3.2.25",
     "mocha": "^6.1.4",
     "nyc": "^14.1.1"
