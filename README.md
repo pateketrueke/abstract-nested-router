@@ -12,10 +12,15 @@ import Router from 'abstract-nested-router';
 
 const r = new Router();
 
+// single routes
 r.add('/', { is: 'home' });
 r.add('/*_', { is: 'catch' });
-r.add('/:a/*_', { is: 'undef' });
-r.add('/:a/:b/:c', { is: 'nested' });
+
+// nested routes
+r.mount('/:a', () => {
+  r.add('/*_', { is: 'undef' });
+  r.add('/:b/:c', { is: 'nested' });
+});
 
 r.find('/');
 [ { is: 'home', params: {}, route: '/', path: '/' } ]

@@ -130,8 +130,11 @@ describe('DSL', () => {
 
     r.add('/', { is: 'home' });
     r.add('/*_', { is: 'catch' });
-    r.add('/:a/*_', { is: 'undef' });
-    r.add('/:a/:b/:c', { is: 'nested' });
+
+    r.mount('/:a', () => {
+      r.add('/*_', { is: 'undef' });
+      r.add('/:b/:c', { is: 'nested' });
+    });
 
     expect(r.find('/')[0].is).to.eql('home');
     expect(r.find('/test')[1].is).to.eql('undef');
