@@ -1,7 +1,7 @@
 export function buildMatcher(path) {
   let regex;
   let _isSplat;
-  let _priority = 0;
+  let _priority = -100;
 
   const keys = [];
 
@@ -12,12 +12,12 @@ export function buildMatcher(path) {
       keys.push(key.substr(1));
 
       if (key.charAt() === ':') {
-        _priority += 2;
+        _priority += 100;
         return '((?!#)[^/]+?)';
       }
 
       _isSplat = true;
-      _priority += 5;
+      _priority += 500;
 
       return '((?!#).+?)';
     });
@@ -25,8 +25,7 @@ export function buildMatcher(path) {
   regex = new RegExp(`^${regex}$`);
 
   const _hashed = path.includes('#') ? 0.5 : 1;
-  const _length = path.split('/').length;
-  const _depth = (_length * _priority - path.length) * _hashed;
+  const _depth = (path.length * _priority) * _hashed;
 
   return {
     keys, regex, _depth, _isSplat,

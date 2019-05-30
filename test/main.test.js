@@ -125,6 +125,18 @@ describe('DSL', () => {
     expect(r.find('/nested#a/b/c')[2].route).to.eql('/nested#:any/*path');
     expect(r.find('/nested#abc/def/ghi')[2].params.path).to.eql('def/ghi');
     expect(() => r.find('/nested/wooot')).to.throw(/Unreachable/);
+
+    r.mount('/x', () => {
+      r.add('/a');
+      r.add('/abc');
+      r.add('/:value');
+    });
+
+    expect(r.find('/x')[1].route).to.eql('/x');
+    expect(r.find('/x/a')[2].route).to.eql('/x/a');
+    expect(r.find('/x/ab')[2].route).to.eql('/x/:value');
+    expect(r.find('/x/abc')[2].route).to.eql('/x/abc');
+    expect(r.find('/x/abcd')[2].route).to.eql('/x/:value');
   });
 
   it('should handle retries', () => {
