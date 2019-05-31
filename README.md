@@ -84,6 +84,16 @@ In the latter case `params.foo` will always be `x` regardless if `-bar` is appen
 
 > _Splat_ parameters will consume the rest of the segments/fragments if they're present, e.g. `/x*y` captures anything that begins with `x` and stores it on `params.y` so it matches `/xy`, `/xabc`, `/x/y`, `/x/a/b/c` and so on.
 
+Every parameter can hold simple regex-like patterns, e.g. `/:id<\d+>`
+
+Supported patterns:
+
+- `/:x` and `/*y` are optional segments and they cannot be empty
+- `<...>` to hold regex-like patterns, `-$.` are escaped, `/` is forbidden
+- `(...)` are used to mark fragments as optional, it translates to `(?:...)?`
+
+> Please avoid `/` inside `(...)` or `<...>` as they will fail loudly!
+
 ### Nesting
 
 Consider the following examples:
