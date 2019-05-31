@@ -90,6 +90,9 @@ describe('DSL', () => {
       fragment: null,
       branch: 'latest',
     });
+
+    expect(() => r.add('/x:y<a/b>')).to.throw(/cannot contain slashes/);
+    expect(() => r.add('/:foo(/:bar)')).to.throw(/Invalid route expression/);
   });
 
   it('should capture all matching routes', () => {

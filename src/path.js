@@ -1,4 +1,4 @@
-export function buildMatcher(path) {
+export function buildMatcher(path, parent) {
   let regex;
   let _isSplat;
   let _priority = -100;
@@ -6,7 +6,7 @@ export function buildMatcher(path) {
   const keys = [];
 
   regex = path
-    .replace(/[-/$.]/g, '\\$&')
+    .replace(/[-$.]/g, '\\$&')
     .replace(/\(/g, '(?:')
     .replace(/\)/g, ')?')
     .replace(/([:*]\w+)(?:<([^<>]+?)>)?/g, (_, key, expr) => {
@@ -20,10 +20,14 @@ export function buildMatcher(path) {
       _isSplat = true;
       _priority += 500;
 
-      return '((?!#).+?)';
+      return `((?!#)${expr || '.+?'})`;
     });
 
-  regex = new RegExp(`^${regex}$`);
+  try {
+    regex = new RegExp(`^${regex}$`);
+  } catch (e) {
+    throw new TypeError(`Invalid route expression, given '${parent}'`);
+  }
 
   const _hashed = path.includes('#') ? 0.5 : 1;
   const _depth = (path.length * _priority) * _hashed;
@@ -34,10 +38,10 @@ export function buildMatcher(path) {
 }
 
 export default class PathMatcher {
-  constructor(path) {
+  constructor(path, parent) {
     const {
       keys, regex, _depth, _isSplat,
-    } = buildMatcher(path);
+    } = buildMatcher(path, parent);
 
     return {
       _isSplat,
@@ -55,11 +59,11 @@ export default class PathMatcher {
     };
   }
 
-  static push(key, prev, leaf) {
+  static push(key, prev, leaf, parent) {
     const root = prev[key] || (prev[key] = {});
 
     if (!root.pattern) {
-      root.pattern = new PathMatcher(key);
+      root.pattern = new PathMatcher(key, parent);
       root.route = leaf || '/';
     }
 

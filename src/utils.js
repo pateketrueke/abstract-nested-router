@@ -6,6 +6,12 @@ export function merge(path, parent) {
 }
 
 export function walk(path, cb) {
+  const matches = path.match(/<[^<>]*\/[^<>]*>/);
+
+  if (matches) {
+    throw new TypeError(`RegExp cannot contain slashes, given '${matches}'`);
+  }
+
   const parts = path !== '/' ? path.split('/') : [''];
   const root = [];
 
@@ -101,7 +107,7 @@ export function add(path, routes, parent, routeInfo) {
   let root = routes;
 
   walk(fullpath, (x, leaf) => {
-    root = PathMatcher.push(x, root, leaf, routeInfo);
+    root = PathMatcher.push(x, root, leaf, fullpath);
 
     if (x !== '/') {
       root.info = root.info || { ...routeInfo };
