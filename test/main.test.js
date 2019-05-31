@@ -58,6 +58,40 @@ describe('DSL', () => {
     expect(router.find('/buzz#test')[1].component).to.eql('Anchor');
   });
 
+  it('should handle advanced parameters (regex-like)', () => {
+    const r = new Router();
+
+    r.add('/v:major<\\d+>(.:minor<\\d+>(.:patch<\\d+>))(-:fragment)(#:branch)');
+    expect(r.find('/v1')[1].params).to.eql({
+      major: '1',
+      minor: null,
+      patch: null,
+      fragment: null,
+      branch: null,
+    });
+    expect(r.find('/v2.0')[1].params).to.eql({
+      major: '2',
+      minor: '0',
+      patch: null,
+      fragment: null,
+      branch: null,
+    });
+    expect(r.find('/v0.5.0-rc17')[1].params).to.eql({
+      major: '0',
+      minor: '5',
+      patch: '0',
+      fragment: 'rc17',
+      branch: null,
+    });
+    expect(r.find('/v0.2.1#latest')[1].params).to.eql({
+      major: '0',
+      minor: '2',
+      patch: '1',
+      fragment: null,
+      branch: 'latest',
+    });
+  });
+
   it('should capture all matching routes', () => {
     const routes = router.find('/foo/nested/something');
 

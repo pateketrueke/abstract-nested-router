@@ -6,14 +6,15 @@ export function buildMatcher(path) {
   const keys = [];
 
   regex = path
-    .replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
-    .replace(/\\\((.*?)\\\)/g, '(?:$1)?')
-    .replace(/\\?([:*]\w+)/g, (_, key) => {
+    .replace(/[-/$.]/g, '\\$&')
+    .replace(/\(/g, '(?:')
+    .replace(/\)/g, ')?')
+    .replace(/([:*]\w+)(?:<([^<>]+?)>)?/g, (_, key, expr) => {
       keys.push(key.substr(1));
 
       if (key.charAt() === ':') {
         _priority += 100;
-        return '((?!#)[^/]+?)';
+        return `((?!#)${expr || '[^/]+?'})`;
       }
 
       _isSplat = true;
@@ -46,7 +47,7 @@ export default class PathMatcher {
 
         if (matches) {
           return keys.reduce((prev, cur, i) => {
-            prev[cur] = decodeURIComponent(matches[i + 1]);
+            prev[cur] = typeof matches[i + 1] === 'string' ? decodeURIComponent(matches[i + 1]) : null;
             return prev;
           }, {});
         }
