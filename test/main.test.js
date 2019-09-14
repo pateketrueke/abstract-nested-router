@@ -207,4 +207,20 @@ describe('DSL', () => {
     expect(r.find('/x')[1].matches).to.be.true;
     expect(r.find('/test')[1].matches).to.be.true;
   });
+
+  it('should load exact routes only', () => {
+    const r = new Router();
+
+    r.mount('/', () => {
+      r.add('/', { exact: true, is: 'home' });
+      r.add('/list', { exact: true, is: 'list' });
+      r.add('/list/add', { exact: true, is: 'add' });
+    });
+
+    const filter = x => r.find(x).filter(y => !(y.exact && !y.matches));
+
+    expect(filter('/').length).to.eql(1);
+    expect(filter('/list').length).to.eql(1);
+    expect(filter('/list/add').length).to.eql(1);
+  });
 });

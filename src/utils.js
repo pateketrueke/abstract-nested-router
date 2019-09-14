@@ -49,13 +49,19 @@ export function reduce(key, root, _seen) {
         Object.assign(params, matches);
 
         if (root[k].route) {
-          out.push({
-            ...root[k].info,
-            matches: (x === leaf) || _isSplat || !extra,
-            params: { ...params },
-            route: root[k].route,
-            path: _isSplat ? extra : leaf || x,
-          });
+          const routeInfo = { ...root[k].info };
+
+          // properly handle exact-routes!
+          const hasMatch = !routeInfo.exact
+            ? (x === leaf || _isSplat || !extra)
+            : (key === leaf || extra === leaf);
+
+          routeInfo.matches = hasMatch;
+          routeInfo.params = { ...params };
+          routeInfo.route = root[k].route;
+          routeInfo.path = _isSplat ? extra : leaf || x;
+
+          out.push(routeInfo);
         }
 
         if (extra === null && !root[k].keys) {
