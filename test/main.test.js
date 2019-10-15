@@ -223,4 +223,16 @@ describe('DSL', () => {
     expect(filter('/list').length).to.eql(1);
     expect(filter('/list/add').length).to.eql(1);
   });
+
+  it('should discard non-exact matches', () => {
+    const r = new Router();
+
+    r.mount('/sub', () => {
+      r.add('#', { exact: true, is: 'home' });
+      r.add('#/about', { exact: true, is: 'about' });
+    });
+
+    expect(r.find('/sub#/about')[1].matches).to.be.false;
+    expect(r.find('/sub#/about')[2].matches).to.be.true;
+  });
 });
