@@ -250,6 +250,18 @@ describe('DSL', () => {
       });
     });
 
+    r.resolve('//', (err, result) => {
+      expect(err).to.be.null;
+    });
+
+    r.resolve('/a//b', (err, result) => {
+      if (err) {
+        expect(err.message).to.match(/Unreachable/);
+      } else {
+        expect(result.length).to.eql(2);
+      }
+    });
+
     const chunks = [];
 
     r.resolve('/a/b/x#z?n=1', (err, result) => {
@@ -259,8 +271,8 @@ describe('DSL', () => {
 
     expect(chunks.length).to.eql(4);
     expect(chunks[0].length).to.eql(2);
-    expect(chunks[1].length).to.eql(3);
-    expect(chunks[2].length).to.eql(4);
+    expect(chunks[1].length).to.eql(1);
+    expect(chunks[2].length).to.eql(1);
     expect(chunks[3].length).to.eql(4);
 
     expect(chunks[3][chunks[3].length - 1].params).to.eql({ v: 'x', vv: 'z' });

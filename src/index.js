@@ -11,18 +11,20 @@ export default class Router {
 
         const segments = uri.substr(1).split('/');
         const prefix = [];
+        const seen = [];
         const map = [];
 
         segments.some(key => {
           const sub = prefix.concat(`/${key}`).join('');
 
-          if (key) prefix.push(`/${key}`);
+          if (key.length) prefix.push(`/${key}`);
 
           try {
             const next = find(sub, routes, 1);
 
             cb(null, next.filter(x => {
-              if (!map.includes(x)) {
+              if (!seen.includes(x.route)) {
+                seen.push(x.route);
                 map.push(x);
                 return true;
               }
