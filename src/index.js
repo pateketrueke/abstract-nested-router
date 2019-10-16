@@ -6,6 +6,41 @@ export default class Router {
     const stack = [];
 
     return {
+      resolve: (path, cb) => {
+        const [uri, hash, query] = path.split(/(?=[#?])/);
+
+        const segments = uri.substr(1).split('/');
+        const prefix = [];
+        const map = [];
+
+        segments.some(key => {
+          const sub = prefix.concat(`/${key}`).join('');
+
+          if (key) prefix.push(`/${key}`);
+
+          try {
+            const next = find(sub, routes, 1);
+
+            cb(null, next.filter(x => {
+              if (!map.includes(x)) {
+                map.push(x);
+                return true;
+              }
+
+              return false;
+            }));
+          } catch (e) {
+            cb(e, []);
+            return true;
+          }
+
+          return false;
+        });
+
+        if (hash) {
+          cb(null, find(`${uri}${hash}`, routes, 1));
+        }
+      },
       mount: (path, cb) => {
         if (path !== '/') {
           stack.push(path);

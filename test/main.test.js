@@ -235,4 +235,34 @@ describe('DSL', () => {
     expect(r.find('/sub#/about')[1].matches).to.be.false;
     expect(r.find('/sub#/about')[2].matches).to.be.true;
   });
+
+  it('should resolve paths starting from root', () => {
+    const r = new Router();
+
+    r.add('/a');
+    r.mount('/a', () => {
+      r.add('/b');
+      r.mount('/b', () => {
+        r.add('/:v');
+        r.mount('/:v', () => {
+          r.add('#:vv');
+        });
+      });
+    });
+
+    const chunks = [];
+
+    r.resolve('/a/b/x#z?n=1', (err, result) => {
+      expect(err).to.be.null;
+      chunks.push(result);
+    });
+
+    expect(chunks.length).to.eql(4);
+    expect(chunks[0].length).to.eql(2);
+    expect(chunks[1].length).to.eql(3);
+    expect(chunks[2].length).to.eql(4);
+    expect(chunks[3].length).to.eql(4);
+
+    expect(chunks[3][chunks[3].length - 1].params).to.eql({ v: 'x', vv: 'z' });
+  });
 });
