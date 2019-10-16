@@ -69,6 +69,7 @@ In the latter example `catch` is resolved just after the previous failure of `/x
 
 Available methods:
 
+- `resolve(path, cb)` &mdash; Progressively finds and invoke callback with `(err, routes)` as input, useful for third-party integrations, e.g. [yrv](https://www.npmjs.com/package/yrv)
 - `mount(path, cb)` &mdash; Allow to register routes under the same route
 - `find(path[, retries])` &mdash; Look up routes by path, in case of failure try passing `retries` as true
 - `add(path[, routeInfo])` &mdash; Register a single route by path, additional info will be returned on match
