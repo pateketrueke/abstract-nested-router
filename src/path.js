@@ -14,13 +14,13 @@ export function buildMatcher(path, parent) {
 
       if (key.charAt() === ':') {
         _priority += 100;
-        return `((?!#)${expr || '[^/]+?'})`;
+        return `((?!#)${expr || '[^#/]+?'})`;
       }
 
       _isSplat = true;
       _priority += 500;
 
-      return `((?!#)${expr || '.+?'})`;
+      return `((?!#)${expr || '[^#]+?'})`;
     });
 
   try {
