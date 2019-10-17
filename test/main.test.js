@@ -277,4 +277,24 @@ describe('DSL', () => {
 
     expect(chunks[3][chunks[3].length - 1].params).to.eql({ v: 'x', vv: 'z' });
   });
+
+  it('should take root-info from first defined route ', () => {
+    const r1 = new Router();
+
+    r1.mount('/example', () => r1.add('/', { is: 'root' }))
+    r1.mount('/example', () => r1.add('/*_', { is: 'fallback' }))
+    r1.mount('/example', () => r1.add('/:name', { is: 'value' }))
+
+    expect(r1.find('/example/a')[1].is).to.eql('root');
+    expect(() => r1.find('/example/a/b')).to.throw(/Unreachable/);
+
+    const r2 = new Router();
+
+    r2.mount('/example', () => r2.add('/*_', { is: 'fallback' }))
+    r2.mount('/example', () => r2.add('/', { is: 'root' }))
+    r2.mount('/example', () => r2.add('/:name', { is: 'value' }))
+
+    expect(r2.find('/example/a')[1].is).to.eql('fallback');
+    expect(() => r2.find('/example/a/b')).to.throw(/Unreachable/);
+  });
 });
