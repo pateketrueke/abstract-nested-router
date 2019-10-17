@@ -64,7 +64,7 @@ export default class PathMatcher {
 
     if (!root.pattern) {
       root.pattern = new PathMatcher(key, parent);
-      root.route = leaf || '/';
+      root.route = (leaf || '').replace(/\/$/, '') || '/';
     }
 
     prev.keys = prev.keys || [];
