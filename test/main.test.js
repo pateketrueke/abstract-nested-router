@@ -281,11 +281,12 @@ describe('DSL', () => {
   it('should take root-info from first defined route ', () => {
     const r1 = new Router();
 
-    r1.mount('/example', () => r1.add('/', { is: 'root' }))
+    r1.mount('/example', () => r1.add('/', { is: 'root', exact: true }))
     r1.mount('/example', () => r1.add('/*_', { is: 'fallback' }))
     r1.mount('/example', () => r1.add('/:name', { is: 'value' }))
 
     expect(r1.find('/example/a')[1].is).to.eql('root');
+    expect(r1.find('/example/a')[1].matches).to.be.false;
     expect(() => r1.find('/example/a/b')).to.throw(/Unreachable/);
 
     const r2 = new Router();

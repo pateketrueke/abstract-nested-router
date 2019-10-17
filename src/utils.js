@@ -54,11 +54,10 @@ export function reduce(key, root, _seen) {
           // properly handle exact-routes!
           let hasMatch = false;
 
-          if (
-            (routeInfo.exact && extra === null)
-            || (!routeInfo.exact && (x === leaf || _isSplat || !extra))
-          ) {
-            hasMatch = true;
+          if (routeInfo.exact) {
+            hasMatch = extra === null;
+          } else {
+            hasMatch = x === leaf || _isSplat || !extra;
           }
 
           routeInfo.matches = hasMatch;
