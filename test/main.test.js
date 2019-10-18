@@ -297,5 +297,15 @@ describe('DSL', () => {
 
     expect(r2.find('/example/a')[1].is).to.eql('fallback');
     expect(() => r2.find('/example/a/b')).to.throw(/Unreachable/);
+
+    const r3 = new Router();
+
+    r3.mount('/', () => r3.add('/password-recovery', { exact: true, is: 'recovery' }));
+    r3.mount('/', () => r3.add('/login', { exact: true, is: 'login' }));
+    r3.mount('/', () => r3.add('/', { exact: null, is: 'root' }));
+
+
+    expect(r3.find('/login')[0].matches).to.be.true;
+    expect(r3.find('/login')[1].matches).to.be.true;
   });
 });
