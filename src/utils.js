@@ -117,7 +117,7 @@ export function add(path, routes, parent, routeInfo) {
   let root = routes;
   let key;
 
-  if (routeInfo) {
+  if (routeInfo && routeInfo.nested !== true) {
     key = routeInfo.key;
     delete routeInfo.key;
   }
