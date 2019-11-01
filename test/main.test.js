@@ -304,8 +304,26 @@ describe('DSL', () => {
     r3.mount('/', () => r3.add('/login', { exact: true, is: 'login' }));
     r3.mount('/', () => r3.add('/', { exact: null, is: 'root' }));
 
-
     expect(r3.find('/login')[0].matches).to.be.true;
     expect(r3.find('/login')[1].matches).to.be.true;
+  });
+
+  it('should drop inherited-keys to preserve uniqueness', () => {
+    const r = new Router();
+
+    r.mount('/top', () => r.add('/foo/a', { key: 'a' }));
+    r.mount('/top', () => r.add('/bar/b', { key: 'b' }));
+    r.mount('/top', () => r.add('/bar/c', { key: 'c' }));
+
+    const routes = [];
+
+    r.resolve('/top/bar/c', (err, result) => routes.push(...result));
+
+    expect(routes).to.eql([
+      { matches: true, params: {}, route: '/', path: '/' },
+      { matches: true, params: {}, route: '/top', path: '/top' },
+      { matches: true, params: {}, route: '/top/bar', path: '/top/bar' },
+      { matches: true, params: {}, route: '/top/bar/c', path: '/top/bar/c', key: 'c' },
+    ]);
   });
 });

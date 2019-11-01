@@ -115,6 +115,12 @@ export function add(path, routes, parent, routeInfo) {
   const fullpath = merge(path, parent);
 
   let root = routes;
+  let key;
+
+  if (routeInfo) {
+    key = routeInfo.key;
+    delete routeInfo.key;
+  }
 
   walk(fullpath, (x, leaf) => {
     root = PathMatcher.push(x, root, leaf, fullpath);
@@ -125,6 +131,10 @@ export function add(path, routes, parent, routeInfo) {
   });
 
   root.info = root.info || { ...routeInfo };
+
+  if (key) {
+    root.info.key = key;
+  }
 
   return fullpath;
 }
