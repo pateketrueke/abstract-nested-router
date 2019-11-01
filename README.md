@@ -75,6 +75,14 @@ Available methods:
 - `add(path[, routeInfo])` &mdash; Register a single route by path, additional info will be returned on match
 - `rm(path)` &mdash; Remove a single route by full-path, it will fail if given route is not registered!
 
+Options:
+
+While `routeInfo` can include anything, but special keys are considered:
+
+- `key` &mdash; Unique identity for any route handler
+- `exact` &mdash; Tell if routing should match exactly or not
+- `nested` &mdash;  If true, then `key` is inherited on any sub-handlers
+
 ### Params
 
 By default all segments are optional, e.g. `/a/:b/:c` matches with `/a`, `/a/x` and `/a/x/y` so you can say `:b` and `:c` are optional parameters.
