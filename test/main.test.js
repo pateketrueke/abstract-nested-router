@@ -3,6 +3,17 @@ import Router from '../src';
 
 /* eslint-disable no-unused-expressions */
 
+function resolve(router, fullpath) {
+  const output = [];
+
+  router.resolve(fullpath, (err, result) => {
+    if (err) throw err;
+    output.push(...result);
+  });
+
+  return output;
+}
+
 let router;
 
 /* global beforeEach, describe, it */
@@ -49,41 +60,40 @@ describe('DSL', () => {
 
   it('should work with hash-based routes', () => {
     const routes = router.find('/buzz#bazzinga');
+    const output = resolve(router, '/buzz#bazzinga');
 
-    expect(routes[1].component).to.eql('Hashed');
-    expect(routes[1].route).to.eql('/buzz#:quux');
-    expect(routes[1].params).to.eql({ quux: 'bazzinga' });
-    expect(routes[1].path).to.eql('/buzz#bazzinga');
+    expect(routes).to.eql(output);
+    expect(routes[2].component).to.eql('Hashed');
+    expect(routes[2].route).to.eql('/buzz#:quux');
+    expect(routes[2].params).to.eql({ quux: 'bazzinga' });
+    expect(routes[2].path).to.eql('/buzz#bazzinga');
 
-    expect(router.find('/buzz#test')[1].component).to.eql('Anchor');
+    expect(router.find('/buzz#test')[2].component).to.eql('Anchor');
   });
 
   it('should handle advanced parameters (regex-like)', () => {
     const r = new Router();
 
-    r.add('/v:major<\\d+>(.:minor<\\d+>(.:patch<\\d+>))(-:fragment)(#:branch)');
+    r.add('/v:major<\\d+>(.:minor<\\d+>(.:patch<\\d+>))(-:fragment)#:branch');
     expect(r.find('/v1')[1].params).to.eql({
       major: '1',
       minor: null,
       patch: null,
       fragment: null,
-      branch: null,
     });
     expect(r.find('/v2.0')[1].params).to.eql({
       major: '2',
       minor: '0',
       patch: null,
       fragment: null,
-      branch: null,
     });
     expect(r.find('/v0.5.0-rc17')[1].params).to.eql({
       major: '0',
       minor: '5',
       patch: '0',
       fragment: 'rc17',
-      branch: null,
     });
-    expect(r.find('/v0.2.1#latest')[1].params).to.eql({
+    expect(r.find('/v0.2.1#latest')[2].params).to.eql({
       major: '0',
       minor: '2',
       patch: '1',
@@ -157,10 +167,11 @@ describe('DSL', () => {
     expect(r.find('/user/john/33')[3].route).to.eql('/user/:name/:age');
 
     expect(r.find('/nested')[1].route).to.eql('/nested');
-    expect(r.find('/nested#')[1].route).to.eql('/nested#');
-    expect(r.find('/nested#test')[1].route).to.eql('/nested#test');
-    expect(r.find('/nested#a/b/c')[2].route).to.eql('/nested#:any/*path');
-    expect(r.find('/nested#abc/def/ghi')[2].params.path).to.eql('def/ghi');
+    expect(r.find('/nested#')[1].route).to.eql('/nested');
+    expect(r.find('/nested#')[2].route).to.eql('/nested#');
+    expect(r.find('/nested#test')[2].route).to.eql('/nested#test');
+    expect(r.find('/nested#a/b/c')[3].route).to.eql('/nested#:any/*path');
+    expect(r.find('/nested#abc/def/ghi')[3].params.path).to.eql('def/ghi');
     expect(() => r.find('/nested/wooot')).to.throw(/Unreachable/);
 
     r.mount('/x', () => {
@@ -232,8 +243,8 @@ describe('DSL', () => {
       r.add('#/about', { exact: true, is: 'about' });
     });
 
-    expect(r.find('/sub#/about')[1].matches).to.be.false;
-    expect(r.find('/sub#/about')[2].matches).to.be.true;
+    expect(r.find('/sub#/about')[2].matches).to.be.false;
+    expect(r.find('/sub#/about')[3].matches).to.be.true;
   });
 
   it('should resolve paths starting from root', () => {
@@ -258,7 +269,7 @@ describe('DSL', () => {
       if (err) {
         expect(err.message).to.match(/Unreachable/);
       } else {
-        expect(result.length).to.eql(2);
+        expect(result.length).to.eql(1);
       }
     });
 
@@ -269,13 +280,13 @@ describe('DSL', () => {
       chunks.push(result);
     });
 
-    expect(chunks.length).to.eql(4);
-    expect(chunks[0].length).to.eql(2);
+    expect(chunks.length).to.eql(5);
+    expect(chunks[0].length).to.eql(1);
     expect(chunks[1].length).to.eql(1);
     expect(chunks[2].length).to.eql(1);
-    expect(chunks[3].length).to.eql(4);
+    expect(chunks[3].length).to.eql(1);
 
-    expect(chunks[3][chunks[3].length - 1].params).to.eql({ v: 'x', vv: 'z' });
+    expect(chunks[4][chunks[4].length - 1].params).to.eql({ v: 'x', vv: 'z' });
   });
 
   it('should take root-info from first defined route ', () => {

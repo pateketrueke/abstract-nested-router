@@ -1,4 +1,5 @@
-import { find, add, rm } from './utils';
+import { walk, find, add, rm } from './utils';
+import { buildMatcher } from './path';
 
 export default class Router {
   constructor() {
@@ -7,41 +8,22 @@ export default class Router {
 
     return {
       resolve: (path, cb) => {
-        const [uri, hash, query] = path.split(/(?=[#?])/);
-
-        const segments = uri.substr(1).split('/');
-        const prefix = [];
+        const url = path.split('?')[0];
         const seen = [];
-        const map = [];
 
-        segments.some(key => {
-          const sub = prefix.concat(`/${key}`).join('');
-
-          if (key.length) prefix.push(`/${key}`);
-
+        walk(url, (x, leaf, extra) => {
           try {
-            const next = find(sub, routes, 1);
-
-            cb(null, next.filter(x => {
-              if (!seen.includes(x.route)) {
-                seen.push(x.route);
-                map.push(x);
+            cb(null, find(leaf, routes, 1).filter(r => {
+              if (!seen.includes(r.route)) {
+                seen.push(r.route);
                 return true;
               }
-
               return false;
             }));
           } catch (e) {
             cb(e, []);
-            return true;
           }
-
-          return false;
         });
-
-        if (hash) {
-          cb(null, find(`${uri}${hash}`, routes, 1));
-        }
       },
       mount: (path, cb) => {
         if (path !== '/') {
@@ -55,5 +37,9 @@ export default class Router {
       add: (path, routeInfo) => add(path, routes, stack.join(''), routeInfo),
       rm: path => rm(path, routes, stack.join('')),
     };
+  }
+
+  static matches(uri, path) {
+    return buildMatcher(uri, path).regex.test(path);
   }
 }

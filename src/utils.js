@@ -12,13 +12,17 @@ export function walk(path, cb) {
     throw new TypeError(`RegExp cannot contain slashes, given '${matches}'`);
   }
 
-  const parts = path !== '/' ? path.split('/') : [''];
+  const parts = path.split(/(?=\/|#)/);
   const root = [];
 
+  if (parts[0] !== '/') {
+    parts.unshift('/');
+  }
+
   parts.some((x, i) => {
-    const parent = root.concat(x).join('/') || null;
-    const segment = parts.slice(i + 1).join('/') || null;
-    const retval = cb(`/${x}`, parent, segment ? `${x ? `/${x}` : ''}/${segment}` : null);
+    const parent = root.slice(1).concat(x).join('') || null;
+    const segment = parts.slice(i + 1).join('') || null;
+    const retval = cb(x, parent, segment ? `${x !== '/' ? x : ''}${segment}` : null);
 
     root.push(x);
 
