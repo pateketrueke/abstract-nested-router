@@ -61,7 +61,7 @@ export function reduce(key, root, _seen) {
           if (routeInfo.exact) {
             hasMatch = extra === null;
           } else {
-            hasMatch = (x && leaf === null) || x === leaf || _isSplat || !extra;
+            hasMatch = !(x && leaf === null) || x === leaf || _isSplat || !extra;
           }
 
           routeInfo.matches = hasMatch;

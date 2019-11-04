@@ -337,4 +337,57 @@ describe('DSL', () => {
       { matches: true, params: {}, route: '/top/bar/c', path: '/top/bar/c', key: 'c' },
     ]);
   });
+
+  it('should discard non-matching leafs', () => {
+    const r = new Router();
+
+    r.mount('/sub', () => r.add('/', { key: 'sub' }));
+    r.mount('/sub', () => r.add('#', { key: 'hash' }));
+    r.mount('/sub', () => r.add('#/about', { key: 'about' }));
+
+    r.mount('/test', () => r.add('/', { key: 'test' }));
+    r.mount('/test', () => r.add('/props', { key: 'props' }));
+    r.mount('/test', () => r.add('/props/:value', { key: 'value' }));
+
+    expect(r.find('/sub')).to.eql([
+      { matches: true, params: {}, route: '/', path: '/' },
+      { matches: true, params: {}, route: '/sub', path: '/sub' },
+    ]);
+
+    expect(r.find('/sub#')).to.eql([
+      { matches: true, params: {}, route: '/', path: '/' },
+      { matches: true, params: {}, route: '/sub', path: '/sub' },
+      { key: 'hash', matches: true, params: {}, route: '/sub#', path: '/sub#' },
+    ]);
+
+    expect(r.find('/sub#/about')).to.eql([
+      { matches: true, params: {}, route: '/', path: '/' },
+      { matches: true, params: {}, route: '/sub', path: '/sub' },
+      { key: 'hash', matches: true, params: {}, route: '/sub#', path: '/sub#' },
+      { key: 'about', matches: true, params: {}, route: '/sub#/about', path: '/sub#/about' },
+    ]);
+
+    expect(r.find('/test')).to.eql([
+      { matches: true, params: {}, route: '/', path: '/' },
+      { matches: true, params: {}, route: '/test', path: '/test' },
+    ]);
+
+    expect(r.find('/test/props')).to.eql([
+      { matches: true, params: {}, route: '/', path: '/' },
+      { matches: true, params: {}, route: '/test', path: '/test' },
+      { key: 'props', matches: true, params: {}, route: '/test/props', path: '/test/props' },
+    ]);
+
+    expect(r.find('/test/props/Hello%20world')).to.eql([
+      { matches: true, params: {}, route: '/', path: '/' },
+      { matches: true, params: {}, route: '/test', path: '/test' },
+      { key: 'props', matches: true, params: {}, route: '/test/props', path: '/test/props' },
+      { key: 'value',
+        matches: true,
+        params: { value: 'Hello world' },
+        route: '/test/props/:value',
+        path: '/test/props/Hello%20world',
+      },
+    ]);
+  });
 });
