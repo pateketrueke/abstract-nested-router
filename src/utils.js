@@ -67,7 +67,7 @@ export function reduce(key, root, _seen) {
           routeInfo.matches = hasMatch;
           routeInfo.params = { ...params };
           routeInfo.route = root[k].route;
-          routeInfo.path = _isSplat ? extra : leaf || x;
+          routeInfo.path = (_isSplat && extra) || leaf || x;
 
           out.push(routeInfo);
         }
@@ -156,26 +156,26 @@ export function rm(path, routes, parent) {
       return true;
     }
 
-    key = x;
-    leaf = x === '/' ? routes['/'] : root;
-
-    if (!leaf.keys) {
+    if (!root.keys) {
       throw new NotFound(path, x);
     }
 
-    root = root[x];
+    key = x;
+    leaf = root;
+    root = root[key];
   });
 
   if (!(leaf && key)) {
     throw new NotFound(path, key);
   }
 
-  delete leaf[key];
-
-  if (key === '/') {
-    delete leaf.info;
-    delete leaf.route;
+  if (leaf === routes) {
+    leaf = routes['/'];
   }
+
+  delete leaf.matches;
+  delete leaf.params;
+  delete leaf.info;
 
   const offset = leaf.keys.indexOf(key);
 

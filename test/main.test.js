@@ -117,12 +117,23 @@ describe('DSL', () => {
 
   it('should be able to unregister segments', () => {
     router.rm('/');
-    expect(router.find('/')).to.eql([]);
-    expect(router.find('/test')[0].component).to.eql('Fallback');
+
+    expect(router.find('/')).to.eql([
+      { matches: true, params: {}, path: '/', route: '/' },
+    ]);
+
+    expect(router.find('/test')).to.eql([
+      { matches: true, params: {}, path: '/', route: '/' },
+      { component: 'Fallback', matches: true, params: { any: 'test' }, path: '/test', route: '/*any' },
+    ]);
 
     router.rm('/*any');
     router.rm('/foo/:bar');
-    expect(router.find('/foo')[0].component).to.eql('JustFoo');
+    expect(router.find('/foo')).to.eql([
+      { matches: true, params: {}, route: '/', path: '/' },
+      { matches: true, params: {}, route: '/foo', path: '/foo' },
+    ]);
+
     expect(() => router.find('/foo/bar')).to.throw(/Unreachable/);
     expect(router.find('/foo/nested/something')[2].component).to.eql('NestedValue');
   });
@@ -131,6 +142,28 @@ describe('DSL', () => {
     router.rm('/*any');
     expect(() => router.find('/noop')).to.throw(/Unreachable/);
     expect(() => router.rm('/foo/not/exists')).to.throw(/Unreachable/);
+  });
+
+  it('should allow to upgrade routes', () => {
+    const r = new Router();
+
+    let fullpath;
+
+    r.mount('/auth', () => r.add('/', { is: 'old' }));
+
+    expect(r.find('/auth')).to.eql([
+      { matches: true, params: {}, route: '/', path: '/' },
+      { is: 'old', matches: true, params: {}, route: '/auth', path: '/auth' },
+    ]);
+
+    r.rm('/auth/');
+
+    r.mount('/auth', () => r.add('/', { is: 'new' }));
+
+    expect(r.find('/auth')).to.eql([
+      { matches: true, params: {}, route: '/', path: '/' },
+      { is: 'new', matches: true, params: {}, route: '/auth', path: '/auth' },
+    ]);
   });
 
   it('should stop on splat params', () => {
