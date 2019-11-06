@@ -14,6 +14,10 @@ function resolve(router, fullpath) {
   return output;
 }
 
+function tail(arr) {
+  return arr[arr.length - 1];
+}
+
 let router;
 
 /* global beforeEach, describe, it */
@@ -131,7 +135,7 @@ describe('DSL', () => {
     router.rm('/foo/:bar');
     expect(router.find('/foo')).to.eql([
       { matches: true, params: {}, route: '/', path: '/' },
-      { matches: true, params: {}, route: '/foo', path: '/foo' },
+      { component: 'JustFoo', matches: true, params: {}, route: '/foo', path: '/foo' },
     ]);
 
     expect(() => router.find('/foo/bar')).to.throw(/Unreachable/);
@@ -164,6 +168,54 @@ describe('DSL', () => {
       { matches: true, params: {}, route: '/', path: '/' },
       { is: 'new', matches: true, params: {}, route: '/auth', path: '/auth' },
     ]);
+  });
+
+  it('should remove specific routes only', () => {
+    const r = new Router();
+
+    r.mount('/test', () => r.add('/', { key: 'test', nested: true }));
+    r.mount('/test', () => r.add('/props', { key: 'props', nested: true }));
+    r.mount('/test', () => r.add('/failed', { key: 'failed', nested: true }));
+
+    expect(tail(r.find('/test'))).to.eql({
+      key: 'test',
+      nested: true,
+      matches: true,
+      params: {},
+      route: '/test',
+      path: '/test',
+    });
+
+    expect(tail(r.find('/test/failed'))).to.eql({
+      key: 'failed',
+      nested: true,
+      matches: true,
+      params: {},
+      route: '/test/failed',
+      path: '/test/failed',
+    });
+
+    r.rm('/test/failed');
+
+    expect(() => r.find('/test/failed')).to.throw(/Unreachable/);
+
+    expect(tail(r.find('/test/props'))).to.eql({
+      key: 'props',
+      nested: true,
+      matches: true,
+      params: {},
+      route: '/test/props',
+      path: '/test/props',
+    });
+
+    expect(tail(r.find('/test'))).to.eql({
+      key: 'test',
+      nested: true,
+      matches: true,
+      params: {},
+      route: '/test',
+      path: '/test',
+    });
   });
 
   it('should stop on splat params', () => {

@@ -173,14 +173,20 @@ export function rm(path, routes, parent) {
     leaf = routes['/'];
   }
 
-  delete leaf.matches;
-  delete leaf.params;
-  delete leaf.info;
+  if (leaf.route !== key) {
+    const offset = leaf.keys.indexOf(key);
 
-  const offset = leaf.keys.indexOf(key);
+    if (offset === -1) {
+      throw new NotFound(path, key);
+    }
 
-  if (offset !== -1) {
-    leaf.keys.splice(leaf.keys.indexOf(key), 1);
+    leaf.keys.splice(offset, 1);
     PathMatcher.sort(leaf);
+
+    delete leaf[key];
+  }
+
+  if (root.route === leaf.route) {
+    delete leaf.info;
   }
 }
