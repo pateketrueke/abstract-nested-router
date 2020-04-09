@@ -187,7 +187,6 @@ export function rm(path, routes, parent) {
   }
 
   // nested routes are upgradeable, so keep original info...
-  if (root.route === leaf.route && !(root.info.nested || leaf.info.nested)) {
-    delete leaf.info;
-  }
+  if (root.route === leaf.route
+    && root.info.key === leaf.info.key) delete leaf.info;
 }
