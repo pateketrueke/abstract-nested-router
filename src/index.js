@@ -14,8 +14,8 @@ export default class Router {
         walk(url, (x, leaf, extra) => {
           try {
             cb(null, find(leaf, routes, 1).filter(r => {
-              if (!seen.includes(r.route)) {
-                seen.push(r.route);
+              if (!seen.includes(r.path)) {
+                seen.push(r.path);
                 return true;
               }
               return false;
