@@ -119,7 +119,7 @@ describe('DSL', () => {
     expect(routes[3].path).to.eql('/foo/nested/something');
   });
 
-  it('should keep repeated route definitions', () => {
+  it('should match routes with trailing-slash as root', () => {
     const r = new Router();
 
     r.mount('/', () => r.add('/', { key: 'r0', nested: true, exact: true }));
@@ -134,6 +134,12 @@ describe('DSL', () => {
     expect(a.length).to.eql(3);
     expect(b.length).to.eql(3);
     expect(a.map(x => x.key)).to.eql(a.map(x => x.key));
+
+    expect(r.find('/players')[1].key).to.eql('p0');
+
+    r.rm('/players/');
+
+    expect(r.find('/players')[1].key).to.eql('p0');
   });
 
   it('should be able to unregister segments', () => {
