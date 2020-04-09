@@ -4,5 +4,6 @@ export default class extends Error {
 
     super(message);
     this.message = message;
+    this.route = path;
   }
 }
