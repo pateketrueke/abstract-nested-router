@@ -29,10 +29,9 @@ function tail(arr) {
   return arr[arr.length - 1];
 }
 
-let router;
-
 /* global beforeEach, describe, it */
 
+let router;
 describe('DSL', () => {
   describe('smoke-test', () => {
     beforeEach(() => {
@@ -168,9 +167,9 @@ describe('DSL', () => {
   it('should match routes with trailing-slash as root', () => {
     const r = new Router();
 
-    r.mount('/', () => r.add('/', { key: 'r0', nested: true, exact: true }));
-    r.mount('/', () => r.add('/players', { key: 'p0', nested: true }));
-    r.mount('/', () => r.add('/players/', { key: 'p1', nested: true }));
+    r.mount('/', () => r.add('/', { key: 'r0', exact: true }));
+    r.mount('/', () => r.add('/players', { key: 'p0' }));
+    r.mount('/', () => r.add('/players/', { key: 'p1' }));
 
     const a = r.find('/players/');
     const b = [];
@@ -179,12 +178,14 @@ describe('DSL', () => {
 
     expect(a.length).to.eql(3);
     expect(b.length).to.eql(3);
-    expect(a.map(x => x.key)).to.eql(a.map(x => x.key));
+    expect(a.map(x => x.key)).to.eql(b.map(x => x.key));
 
-    expect(r.find('/players')[1].key).to.eql('p0');
+    expect(a[0].key).to.eql('r0');
+    expect(a[1].key).to.eql('p0');
+    expect(a[2].key).to.eql('p1');
 
     r.rm('/players/');
-
+    expect(r.find('/players').length).to.eql(2);
     expect(r.find('/players')[1].key).to.eql('p0');
   });
 
@@ -192,7 +193,6 @@ describe('DSL', () => {
     const r = new Router();
 
     let fullpath;
-
     r.mount('/auth', () => r.add('/', { is: 'old' }));
 
     expect(r.find('/auth')).to.eql([
@@ -213,13 +213,12 @@ describe('DSL', () => {
   it('should remove specific routes only', () => {
     const r = new Router();
 
-    r.mount('/test', () => r.add('/', { key: 'test', nested: true }));
-    r.mount('/test', () => r.add('/props', { key: 'props', nested: true }));
-    r.mount('/test', () => r.add('/failed', { key: 'failed', nested: true }));
+    r.mount('/test', () => r.add('/', { key: 'test' }));
+    r.mount('/test', () => r.add('/props', { key: 'props' }));
+    r.mount('/test', () => r.add('/failed', { key: 'failed' }));
 
     expect(tail(r.find('/test'))).to.eql({
       key: 'test',
-      nested: true,
       matches: true,
       params: {},
       route: '/test',
@@ -228,7 +227,6 @@ describe('DSL', () => {
 
     expect(tail(r.find('/test/failed'))).to.eql({
       key: 'failed',
-      nested: true,
       matches: true,
       params: {},
       route: '/test/failed',
@@ -241,7 +239,6 @@ describe('DSL', () => {
 
     expect(tail(r.find('/test/props'))).to.eql({
       key: 'props',
-      nested: true,
       matches: true,
       params: {},
       route: '/test/props',
@@ -250,7 +247,6 @@ describe('DSL', () => {
 
     expect(tail(r.find('/test'))).to.eql({
       key: 'test',
-      nested: true,
       matches: true,
       params: {},
       route: '/test',

@@ -81,7 +81,6 @@ While `routeInfo` can include anything, but special keys are considered:
 
 - `key` &mdash; Unique identity for any route handler
 - `exact` &mdash; Tell if routing should match exactly or not
-- `nested` &mdash;  If true, then `key` is inherited on any sub-handlers
 
 ### Params
 

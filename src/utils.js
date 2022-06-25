@@ -36,14 +36,12 @@ export function reduce(key, root, _seen) {
   const out = [];
 
   let splat;
-
   walk(key, (x, leaf, extra) => {
-    let found;
-
     if (!root.keys) {
       throw new NotFound(key, x);
     }
 
+    let found;
     root.keys.some(k => {
       if (_seen.includes(k)) return false;
 
@@ -72,6 +70,10 @@ export function reduce(key, root, _seen) {
 
           if (parent[routeInfo.route]) {
             routeInfo.key = parent[routeInfo.route];
+
+            if (routeInfo.path.substr(-1) === '/') {
+              routeInfo.key = parent[`${routeInfo.route}/`] || routeInfo.key;
+            }
           }
 
           out.push(routeInfo);
@@ -125,27 +127,25 @@ export function add(path, routes, parent, routeInfo) {
   const params = { ...routeInfo };
 
   let root = routes;
-  let key;
-  if (params.nested !== true) {
-    key = params.key;
-    delete params.key;
-  }
-
   walk(fullpath, (x, leaf) => {
     root = PathMatcher.push(x, root, leaf, fullpath);
 
     if (x !== '/') {
       root.info = { ...params, ...root.info };
-
-      if (!routes.refs[leaf] && key) {
-        routes.refs[leaf] = key;
-      }
     }
   });
 
+  if (params.key && !routes.refs[params.key]) {
+    routes.refs[params.key] = fullpath;
+    routes.refs[fullpath] = params.key;
+  }
+
   root.info = { ...root.info, ...routeInfo };
-  if (key) {
-    routes.refs[fullpath.replace(/\/$/, '')] = key;
+
+  if (fullpath !== '/' && fullpath.substr(-1) === '/') {
+    const prop = fullpath.replace(/(?<=.)\/$/, '');
+
+    routes.refs[prop] = routes.refs[prop] || params.key;
   }
   return fullpath;
 }
@@ -156,7 +156,6 @@ export function rm(path, routes, parent) {
   let root = routes;
   let leaf = null;
   let key = null;
-
   walk(fullpath, x => {
     if (!root) {
       leaf = null;
