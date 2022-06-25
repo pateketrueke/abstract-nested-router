@@ -2,7 +2,7 @@
 
 > It _tries_ to capture all matching routes from its **root**.
 >
-> [![Build Status](https://api.travis-ci.org/pateketrueke/abstract-nested-router.svg?branch=master)](https://travis-ci.org/pateketrueke/abstract-nested-router)
+> [![Build status](https://github.com/pateketrueke/abstract-nested-router/actions/workflows/ci.yml/badge.svg)](https://github.com/pateketrueke/abstract-nested-router/actions/workflows/ci.yml)
 > [![NPM version](https://badge.fury.io/js/abstract-nested-router.svg)](http://badge.fury.io/js/abstract-nested-router)
 > [![Coverage Status](https://codecov.io/github/pateketrueke/abstract-nested-router/coverage.svg?branch=master)](https://codecov.io/github/pateketrueke/abstract-nested-router)
 > [![Known Vulnerabilities](https://snyk.io/test/npm/abstract-nested-router/badge.svg)](https://snyk.io/test/npm/abstract-nested-router)

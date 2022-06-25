@@ -13,7 +13,7 @@
     "test:ci": "npm run coverage && npm run report --",
     "test:unit": "npm run mocha -- -r esm 'test/*.test.js'",
     "coverage": "nyc --silent -x '**/tests/**' -x '**/*.test.js' -- npm run test:unit",
-    "upload": "codecov --file=coverage/lcov.info --disable=gcov -e TRAVIS_NODE_VERSION",
+    "upload": "codecov --file=coverage/lcov.info --disable=gcov",
     "report": "nyc report",
     "prepublish": "npm run build"
   },
