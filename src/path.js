@@ -43,19 +43,24 @@ export default class PathMatcher {
       keys, regex, _depth, _isSplat,
     } = buildMatcher(path, parent);
 
+    function fn(value) {
+      const matches = value.match(regex);
+
+      if (matches) {
+        return keys.reduce((prev, cur, i) => {
+          prev[cur] = typeof matches[i + 1] === 'string' ? decodeURIComponent(matches[i + 1]) : null;
+          return prev;
+        }, {});
+      }
+    }
+
+    fn.regex = regex;
+    fn.keys = keys;
+
     return {
       _isSplat,
       _depth,
-      match: value => {
-        const matches = value.match(regex);
-
-        if (matches) {
-          return keys.reduce((prev, cur, i) => {
-            prev[cur] = typeof matches[i + 1] === 'string' ? decodeURIComponent(matches[i + 1]) : null;
-            return prev;
-          }, {});
-        }
-      },
+      match: fn,
     };
   }
 

@@ -7,19 +7,20 @@ export default class Router {
     const stack = [];
 
     return {
+      routes,
       resolve: (path, cb) => {
         const url = path.split('?')[0];
         const seen = [];
 
         walk(url, (x, leaf, extra) => {
           try {
-            cb(null, find(leaf, routes, 1).filter(r => {
-              if (!seen.includes(r.path)) {
-                seen.push(r.path);
+            cb(null, find(leaf, routes, 2).filter(r => {
+              if (!seen.includes(r.route)) {
+                seen.push(r.route);
                 return true;
               }
               return false;
-            }));
+            }), leaf);
           } catch (e) {
             cb(e, []);
           }

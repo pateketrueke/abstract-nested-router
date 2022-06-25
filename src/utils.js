@@ -30,9 +30,9 @@ export function walk(path, cb) {
   });
 }
 
-export function reduce(key, root, _seen) {
+export function reduce(key, root) {
   const parent = root.refs;
-  const params = {};
+  const data = {};
   const out = [];
 
   let splat;
@@ -43,53 +43,53 @@ export function reduce(key, root, _seen) {
 
     let found;
     root.keys.some(k => {
-      if (_seen.includes(k)) return false;
-
-      const { match, _isSplat } = root[k].pattern;
+      const { match, _length, _isSplat } = root[k].pattern;
       const matches = match(_isSplat ? extra || x : x);
 
       if (matches) {
-        Object.assign(params, matches);
+        const routes = (parent[root[k].route] || [])
+          .concat(parent[root[k].route + '/'] || [])
+          .concat(parent[root[k].route + '#'] || []);
 
-        if (root[k].route) {
-          const routeInfo = { ...root[k].info };
+        Object.assign(data, matches);
 
-          // properly handle exact-routes!
-          let hasMatch = false;
+        routes.forEach(route => {
+          if (!out.some(x => x.key === route)) {
+            const routeInfo = { ...parent[route] };
 
-          if (routeInfo.exact) {
-            hasMatch = extra === null;
-          } else {
-            hasMatch = !(x && leaf === null) || x === leaf || _isSplat || !extra;
-          }
+            // properly handle exact-routes!
+            let hasMatch = false;
 
-          routeInfo.matches = hasMatch;
-          routeInfo.params = { ...params };
-          routeInfo.route = root[k].route;
-          routeInfo.path = (_isSplat && extra) || leaf || x;
-
-          if (parent[routeInfo.route]) {
-            routeInfo.key = parent[routeInfo.route];
-
-            if (routeInfo.path.substr(-1) === '/') {
-              routeInfo.key = parent[`${routeInfo.route}/`] || routeInfo.key;
+            if (routeInfo.exact) {
+              hasMatch = extra === null;
+            } else {
+              hasMatch = !(x && leaf === null) || x === leaf || _isSplat || !extra;
             }
-          }
 
-          out.push(routeInfo);
-        }
+            routeInfo.matches = hasMatch;
+            routeInfo.params = { ...data };
+            routeInfo.route = routeInfo.fullpath;
+            routeInfo.depth += match.keys.length;
+            routeInfo.path = (_isSplat && extra) || leaf || x;
+
+            delete routeInfo.fullpath;
+            out.push(routeInfo);
+          }
+        });
 
         if (extra === null && !root[k].keys) {
           return true;
         }
 
-        if (k !== '/') _seen.push(k);
+        if (!_isSplat && !extra && root.keys.some(x => x.includes('*'))) {
+          return false;
+        }
+
         splat = _isSplat;
         root = root[k];
         found = true;
         return true;
       }
-
       return false;
     });
 
@@ -100,7 +100,13 @@ export function reduce(key, root, _seen) {
     return splat || !found;
   });
 
-  return out;
+  return out.sort((a, b) => {
+    if (b.fallback && !a.fallback) return -1;
+    if (a.fallback && !b.fallback) return 1;
+    if (b.route.includes('#') && !a.route.includes('#')) return -1;
+    if (a.route.includes('#') && !b.route.includes('#')) return 1;
+    return a.depth - b.depth;
+  });
 }
 
 export function find(path, routes, retries) {
@@ -124,29 +130,27 @@ export function find(path, routes, retries) {
 
 export function add(path, routes, parent, routeInfo) {
   const fullpath = merge(path, parent);
-  const params = { ...routeInfo };
+  const depth = fullpath.split(/(?=[#:/*.]\w)/g).length;
+  const params = { ...routeInfo, fullpath, depth };
+
+  if (!path || !'#/'.includes(path.charAt())) {
+    throw new TypeError(`Routes should have a valid path, given ${JSON.stringify(path)}`);
+  }
+
+  if (!params.key) {
+    throw new TypeError(`Routes should have a key, given ${JSON.stringify(params)}`);
+  }
+
+  routes.refs[params.key] = params;
+  routes.refs[fullpath] = routes.refs[fullpath]
+    ? routes.refs[fullpath].concat(params.key)
+    : [params.key];
 
   let root = routes;
   walk(fullpath, (x, leaf) => {
     root = PathMatcher.push(x, root, leaf, fullpath);
-
-    if (x !== '/') {
-      root.info = { ...params, ...root.info };
-    }
   });
 
-  if (params.key && !routes.refs[params.key]) {
-    routes.refs[params.key] = fullpath;
-    routes.refs[fullpath] = params.key;
-  }
-
-  root.info = { ...root.info, ...routeInfo };
-
-  if (fullpath !== '/' && fullpath.substr(-1) === '/') {
-    const prop = fullpath.replace(/(?<=.)\/$/, '');
-
-    routes.refs[prop] = routes.refs[prop] || params.key;
-  }
   return fullpath;
 }
 
@@ -192,7 +196,7 @@ export function rm(path, routes, parent) {
     delete leaf[key];
   }
 
-  // nested routes are upgradeable, so keep original info...
-  if (root.route === leaf.route
-    && (!root.info || (root.info.key === leaf.info.key))) delete leaf.info;
+  if (leaf.route === root.route) {
+    delete routes.refs[fullpath];
+  }
 }

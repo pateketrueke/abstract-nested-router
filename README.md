@@ -12,55 +12,25 @@ import Router from 'abstract-nested-router';
 
 const r = new Router();
 
-// single routes
-r.add('/', { is: 'home' });
-r.add('/*_', { is: 'catch' });
-
-// nested routes
-r.mount('/:a', () => {
-  r.add('/*_', { is: 'undef' });
-  r.add('/:b/:c', { is: 'nested' });
+r.add('/', { key: 'Home' });
+r.mount('/', () => {
+  r.add('/foo', { key: 'JustFoo' });
+  r.mount('/foo', () => {
+    r.add('/static', { key: 'StaticOne' });
+    r.mount('/nested', () => {
+      r.add('/', { key: 'NestedRoot' });
+      r.add('/:value', { key: 'NestedValue' });
+    });
+    r.add('/:bar', { key: 'AndNested' });
+  });
+  r.add('/baz', { key: 'Baz' });
+  r.add('/buzz', { key: 'Buzz' });
+  r.mount('/buzz', () => {
+    r.add('#test', { key: 'Anchor' });
+    r.add('#:quux', { key: 'Hashed' });
+  });
+  r.add('/*any', { key: 'Fallback' });
 });
-
-r.find('/');
-[ { is: 'home', params: {}, route: '/', path: '/' } ]
-
-r.find('/test');
-[ { is: 'home', params: {}, route: '/', path: '/' },
-  { is: 'undef',
-    params: { a: 'test' },
-    route: '/:a',
-    path: '/test' } ]
-
-r.find('/x/y');
-[ { is: 'home', params: {}, route: '/', path: '/' },
-  { is: 'undef', params: { a: 'x' }, route: '/:a', path: '/x' },
-  { is: 'nested',
-    params: { a: 'x', b: 'y' },
-    route: '/:a/:b',
-    path: '/x/y' } ]
-
-r.find('/x/y/z');
-[ { is: 'home', params: {}, route: '/', path: '/' },
-  { is: 'undef', params: { a: 'x' }, route: '/:a', path: '/x' },
-  { is: 'nested',
-    params: { a: 'x', b: 'y' },
-    route: '/:a/:b',
-    path: '/x/y' },
-  { is: 'nested',
-    params: { a: 'x', b: 'y', c: 'z' },
-    route: '/:a/:b/:c',
-    path: '/x/y/z' } ]
-
-r.find('/x/y/z/0');
-// Error: Unreachable '/x/y/z/0', segment '/0' is not defined
-
-r.find('/x/y/z/0', true);
-[ { is: 'home', params: {}, route: '/', path: '/' },
-  { is: 'catch',
-    params: { _: 'x/y/z/0' },
-    route: '/*_',
-    path: '/x/y/z/0' } ]
 ```
 
 In the latter example `catch` is resolved just after the previous failure of `/x/y/z/0` because we're trying at least twice.
