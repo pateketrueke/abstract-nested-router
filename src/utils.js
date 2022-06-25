@@ -31,6 +31,7 @@ export function walk(path, cb) {
 }
 
 export function reduce(key, root, _seen) {
+  const parent = root.refs;
   const params = {};
   const out = [];
 
@@ -68,6 +69,10 @@ export function reduce(key, root, _seen) {
           routeInfo.params = { ...params };
           routeInfo.route = root[k].route;
           routeInfo.path = (_isSplat && extra) || leaf || x;
+
+          if (parent[routeInfo.route]) {
+            routeInfo.key = parent[routeInfo.route];
+          }
 
           out.push(routeInfo);
         }
@@ -117,29 +122,31 @@ export function find(path, routes, retries) {
 
 export function add(path, routes, parent, routeInfo) {
   const fullpath = merge(path, parent);
+  const params = { ...routeInfo };
 
   let root = routes;
   let key;
-
-  if (routeInfo && routeInfo.nested !== true) {
-    key = routeInfo.key;
-    delete routeInfo.key;
+  if (params.nested !== true) {
+    key = params.key;
+    delete params.key;
   }
 
   walk(fullpath, (x, leaf) => {
     root = PathMatcher.push(x, root, leaf, fullpath);
 
     if (x !== '/') {
-      root.info = root.info || { ...routeInfo };
+      root.info = { ...params, ...root.info };
+
+      if (!routes.refs[leaf] && key) {
+        routes.refs[leaf] = key;
+      }
     }
   });
 
-  root.info = root.info || { ...routeInfo };
-
+  root.info = { ...root.info, ...routeInfo };
   if (key) {
-    root.info.key = key;
+    routes.refs[fullpath.replace(/\/$/, '')] = key;
   }
-
   return fullpath;
 }
 

@@ -3,7 +3,7 @@ import { buildMatcher } from './path';
 
 export default class Router {
   constructor() {
-    const routes = {};
+    const routes = { refs: {} };
     const stack = [];
 
     return {

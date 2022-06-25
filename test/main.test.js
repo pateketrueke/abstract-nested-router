@@ -14,6 +14,17 @@ function resolve(router, fullpath) {
   return output;
 }
 
+function shuffle(tests) {
+  let currentIndex = tests.length, randomIndex;
+  while (currentIndex != 0) {
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    [tests[currentIndex], tests[randomIndex]] = [tests[randomIndex], tests[currentIndex]];
+  }
+  return tests.forEach(fn => fn());
+}
+
 function tail(arr) {
   return arr[arr.length - 1];
 }
@@ -23,56 +34,101 @@ let router;
 /* global beforeEach, describe, it */
 
 describe('DSL', () => {
-  beforeEach(() => {
-    router = new Router();
-    router.add('/', { component: 'Home' });
-    router.mount('/', () => {
-      router.add('/foo', { component: 'JustFoo' });
-      router.mount('/foo', () => {
-        router.add('/static', { component: 'StaticOne' });
-        router.mount('/nested', () => {
-          router.add('/:value', { component: 'NestedValue' });
+  describe('smoke-test', () => {
+    beforeEach(() => {
+      router = new Router();
+      router.add('/', { component: 'Home' });
+      router.mount('/', () => {
+        router.add('/foo', { component: 'JustFoo' });
+        router.mount('/foo', () => {
+          router.add('/static', { component: 'StaticOne' });
+          router.mount('/nested', () => {
+            router.add('/:value', { component: 'NestedValue' });
+          });
+          router.add('/:bar', { component: 'AndNested' });
         });
-        router.add('/:bar', { component: 'AndNested' });
+        router.add('/baz', { component: 'Baz' });
+        router.add('/buzz', { component: 'Buzz' });
+        router.mount('/buzz', () => {
+          router.add('#test', { component: 'Anchor' });
+          router.add('#:quux', { component: 'Hashed' });
+        });
+        router.add('/*any', { component: 'Fallback' });
       });
-      router.add('/baz', { component: 'Baz' });
-      router.add('/buzz', { component: 'Buzz' });
-      router.mount('/buzz', () => {
-        router.add('#test', { component: 'Anchor' });
-        router.add('#:quux', { component: 'Hashed' });
-      });
-      router.add('/*any', { component: 'Fallback' });
     });
-  });
 
-  it('should match static segments', () => {
-    expect(router.find('/')[0].component).to.eql('Home');
-    expect(router.find('/foo')[1].component).to.eql('JustFoo');
-  });
+    it('should match static segments', () => {
+      expect(router.find('/')[0].component).to.eql('Home');
+      expect(router.find('/foo')[1].component).to.eql('JustFoo');
+    });
 
-  it('should match nested segments', () => {
-    expect(router.find('/foo/static')[2].component).to.eql('StaticOne');
-  });
+    it('should match nested segments', () => {
+      expect(router.find('/foo/static')[2].component).to.eql('StaticOne');
+    });
 
-  it('should match param-segments', () => {
-    expect(router.find('/foo/fun')[2].component).to.eql('AndNested');
-  });
+    it('should match param-segments', () => {
+      expect(router.find('/foo/fun')[2].component).to.eql('AndNested');
+    });
 
-  it('should match splat-segments', () => {
-    expect(router.find('/other')[1].component).to.eql('Fallback');
-  });
+    it('should match splat-segments', () => {
+      expect(router.find('/other')[1].component).to.eql('Fallback');
+    });
 
-  it('should work with hash-based routes', () => {
-    const routes = router.find('/buzz#bazzinga');
-    const output = resolve(router, '/buzz#bazzinga');
+    it('should work with hash-based routes', () => {
+      const routes = router.find('/buzz#bazzinga');
+      const output = resolve(router, '/buzz#bazzinga');
 
-    expect(routes).to.eql(output);
-    expect(routes[2].component).to.eql('Hashed');
-    expect(routes[2].route).to.eql('/buzz#:quux');
-    expect(routes[2].params).to.eql({ quux: 'bazzinga' });
-    expect(routes[2].path).to.eql('/buzz#bazzinga');
+      expect(routes).to.eql(output);
+      expect(routes[2].component).to.eql('Hashed');
+      expect(routes[2].route).to.eql('/buzz#:quux');
+      expect(routes[2].params).to.eql({ quux: 'bazzinga' });
+      expect(routes[2].path).to.eql('/buzz#bazzinga');
 
-    expect(router.find('/buzz#test')[2].component).to.eql('Anchor');
+      expect(router.find('/buzz#test')[2].component).to.eql('Anchor');
+    });
+
+    it('should capture all matching routes', () => {
+      const routes = router.find('/foo/nested/something');
+
+      expect(routes.length).to.eql(4);
+      expect(routes[0].path).to.eql('/');
+      expect(routes[1].path).to.eql('/foo');
+      expect(routes[2].path).to.eql('/foo/nested');
+      expect(routes[3].path).to.eql('/foo/nested/something');
+    });
+
+    it('should be able to unregister segments', () => {
+      router.rm('/');
+
+      expect(router.find('/')).to.eql([
+        { matches: true, params: {}, path: '/', route: '/' },
+      ]);
+
+      expect(router.find('/test')).to.eql([
+        { matches: true, params: {}, path: '/', route: '/' },
+        { component: 'Fallback', matches: true, params: { any: 'test' }, path: '/test', route: '/*any' },
+      ]);
+
+      router.rm('/*any');
+      router.rm('/foo/:bar');
+      expect(router.find('/foo')).to.eql([
+        { matches: true, params: {}, route: '/', path: '/' },
+        { component: 'JustFoo', matches: true, params: {}, route: '/foo', path: '/foo' },
+      ]);
+
+      expect(() => router.find('/foo/bar')).to.throw(/Unreachable/);
+      expect(router.find('/foo/nested/something')[2].component).to.eql('NestedValue');
+    });
+
+    it('should fail if routes are missing', () => {
+      router.rm('/*any');
+      expect(() => router.find('/noop')).to.throw(/Unreachable/);
+      expect(() => router.rm('/foo/not/exists')).to.throw(/Unreachable/);
+    });
+
+    it('should stop on splat params', () => {
+      expect(router.find('/a/b/c').length).to.eql(2);
+    });
   });
 
   it('should handle advanced parameters (regex-like)', () => {
@@ -109,16 +165,6 @@ describe('DSL', () => {
     expect(() => r.add('/:foo(/:bar)')).to.throw(/Invalid route expression/);
   });
 
-  it('should capture all matching routes', () => {
-    const routes = router.find('/foo/nested/something');
-
-    expect(routes.length).to.eql(4);
-    expect(routes[0].path).to.eql('/');
-    expect(routes[1].path).to.eql('/foo');
-    expect(routes[2].path).to.eql('/foo/nested');
-    expect(routes[3].path).to.eql('/foo/nested/something');
-  });
-
   it('should match routes with trailing-slash as root', () => {
     const r = new Router();
 
@@ -140,35 +186,6 @@ describe('DSL', () => {
     r.rm('/players/');
 
     expect(r.find('/players')[1].key).to.eql('p0');
-  });
-
-  it('should be able to unregister segments', () => {
-    router.rm('/');
-
-    expect(router.find('/')).to.eql([
-      { matches: true, params: {}, path: '/', route: '/' },
-    ]);
-
-    expect(router.find('/test')).to.eql([
-      { matches: true, params: {}, path: '/', route: '/' },
-      { component: 'Fallback', matches: true, params: { any: 'test' }, path: '/test', route: '/*any' },
-    ]);
-
-    router.rm('/*any');
-    router.rm('/foo/:bar');
-    expect(router.find('/foo')).to.eql([
-      { matches: true, params: {}, route: '/', path: '/' },
-      { component: 'JustFoo', matches: true, params: {}, route: '/foo', path: '/foo' },
-    ]);
-
-    expect(() => router.find('/foo/bar')).to.throw(/Unreachable/);
-    expect(router.find('/foo/nested/something')[2].component).to.eql('NestedValue');
-  });
-
-  it('should fail if routes are missing', () => {
-    router.rm('/*any');
-    expect(() => router.find('/noop')).to.throw(/Unreachable/);
-    expect(() => router.rm('/foo/not/exists')).to.throw(/Unreachable/);
   });
 
   it('should allow to upgrade routes', () => {
@@ -239,10 +256,6 @@ describe('DSL', () => {
       route: '/test',
       path: '/test',
     });
-  });
-
-  it('should stop on splat params', () => {
-    expect(router.find('/a/b/c').length).to.eql(2);
   });
 
   it('should handle sorting', () => {
@@ -440,8 +453,8 @@ describe('DSL', () => {
 
     expect(routes).to.eql([
       { matches: true, params: {}, route: '/', path: '/' },
-      { matches: true, params: {}, route: '/top', path: '/top' },
-      { matches: true, params: {}, route: '/top/bar', path: '/top/bar' },
+      { matches: true, params: {}, route: '/top', path: '/top', key: 'a' },
+      { matches: true, params: {}, route: '/top/bar', path: '/top/bar', key: 'b' },
       { matches: true, params: {}, route: '/top/bar/c', path: '/top/bar/c', key: 'c' },
     ]);
   });
@@ -449,53 +462,69 @@ describe('DSL', () => {
   it('should discard non-matching leafs', () => {
     const r = new Router();
 
-    r.mount('/sub', () => r.add('/', { key: 'sub' }));
-    r.mount('/sub', () => r.add('#', { key: 'hash' }));
-    r.mount('/sub', () => r.add('#/about', { key: 'about' }));
-
-    r.mount('/test', () => r.add('/', { key: 'test' }));
-    r.mount('/test', () => r.add('/props', { key: 'props' }));
-    r.mount('/test', () => r.add('/props/:value', { key: 'value' }));
+    shuffle([
+      () => r.mount('/sub', () => r.add('/', { key: 'sub' })),
+      () => r.mount('/sub', () => r.add('#', { key: 'hash' })),
+      () => r.mount('/sub', () => r.add('#/about', { key: 'about' })),
+      () => r.mount('/test', () => r.add('/', { key: 'test' })),
+      () => r.mount('/test', () => r.add('/props', { key: 'props' })),
+      () => r.mount('/test', () => r.add('/props/:value', { key: 'value' })),
+    ]);
 
     expect(r.find('/sub')).to.eql([
       { matches: true, params: {}, route: '/', path: '/' },
-      { matches: true, params: {}, route: '/sub', path: '/sub' },
+      { matches: true, params: {}, route: '/sub', path: '/sub', key: 'sub' },
     ]);
 
     expect(r.find('/sub#')).to.eql([
       { matches: true, params: {}, route: '/', path: '/' },
-      { matches: true, params: {}, route: '/sub', path: '/sub' },
-      { key: 'hash', matches: true, params: {}, route: '/sub#', path: '/sub#' },
+      { matches: true, params: {}, route: '/sub', path: '/sub', key: 'sub' },
+      { matches: true, params: {}, route: '/sub#', path: '/sub#', key: 'hash' },
     ]);
 
     expect(r.find('/sub#/about')).to.eql([
       { matches: true, params: {}, route: '/', path: '/' },
-      { matches: true, params: {}, route: '/sub', path: '/sub' },
-      { key: 'hash', matches: true, params: {}, route: '/sub#', path: '/sub#' },
-      { key: 'about', matches: true, params: {}, route: '/sub#/about', path: '/sub#/about' },
+      { matches: true, params: {}, route: '/sub', path: '/sub', key: 'sub' },
+      { matches: true, params: {}, route: '/sub#', path: '/sub#', key: 'hash' },
+      { matches: true, params: {}, route: '/sub#/about', path: '/sub#/about', key: 'about' },
     ]);
 
     expect(r.find('/test')).to.eql([
       { matches: true, params: {}, route: '/', path: '/' },
-      { matches: true, params: {}, route: '/test', path: '/test' },
+      { matches: true, params: {}, route: '/test', path: '/test', key: 'test' },
     ]);
 
     expect(r.find('/test/props')).to.eql([
       { matches: true, params: {}, route: '/', path: '/' },
-      { matches: true, params: {}, route: '/test', path: '/test' },
-      { key: 'props', matches: true, params: {}, route: '/test/props', path: '/test/props' },
+      { matches: true, params: {}, route: '/test', path: '/test', key: 'test' },
+      { matches: true, params: {}, route: '/test/props', path: '/test/props', key: 'props' },
     ]);
 
     expect(r.find('/test/props/Hello%20world')).to.eql([
       { matches: true, params: {}, route: '/', path: '/' },
-      { matches: true, params: {}, route: '/test', path: '/test' },
-      { key: 'props', matches: true, params: {}, route: '/test/props', path: '/test/props' },
-      { key: 'value',
-        matches: true,
+      { matches: true, params: {}, route: '/test', path: '/test', key: 'test' },
+      { matches: true, params: {}, route: '/test/props', path: '/test/props', key: 'props' },
+      { matches: true,
         params: { value: 'Hello world' },
         route: '/test/props/:value',
         path: '/test/props/Hello%20world',
+        key: 'value',
       },
     ]);
+  });
+
+  it('should match all optional segments', () => {
+    const r = new Router();
+
+    shuffle([
+      () => r.mount('/page', () => r.add('/:a/:b', { key: 'b' })),
+      () => r.mount('/page', () => r.add('/:a', { key: 'a' })),
+      () => r.mount('/page', () => r.add('/', { key: 'x' })),
+    ]);
+
+    expect(r.find('/page/1/edit').length).to.eql(4);
+    expect(r.find('/page/1/edit')[1].key).to.eql('x');
+    expect(r.find('/page/1/edit')[2].key).to.eql('a');
+    expect(r.find('/page/1/edit')[3].key).to.eql('b');
   });
 });
