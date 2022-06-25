@@ -1,6 +1,6 @@
 {
   "name": "abstract-nested-router",
-  "version": "0.1.20",
+  "version": "0.1.21",
   "description": "Minimal nested-routing impl!",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
