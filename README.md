@@ -33,8 +33,6 @@ r.mount('/', () => {
 });
 ```
 
-In the latter example `catch` is resolved just after the previous failure of `/x/y/z/0` because we're trying at least twice.
-
 ## API
 
 Available methods:
@@ -51,6 +49,7 @@ While `routeInfo` can include anything, but special keys are considered:
 
 - `key` &mdash; Unique identity for any route handler
 - `exact` &mdash; Tell if routing should match exactly or not
+- `fallback` &mdash; Tell if the route should be used as last resort
 
 ### Params
 
